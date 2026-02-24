@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install -i https://mirror-pypi.runflare.com/simple -r /app/requirements.txt
+    && pip install -r /app/requirements.txt
 
 COPY . /app
 
