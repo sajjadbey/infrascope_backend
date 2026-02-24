@@ -52,11 +52,21 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'csp.middleware.CSPMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = (
+    "'self'", 
+    "https://static.cloudflareinsights.com", 
+    "'sha512-z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=='"
+)
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
+CSP_IMG_SRC = ("'self'", "data:", "https://qizilbash.ir")
 
 ROOT_URLCONF = 'infrascope_backend.urls'
 
@@ -125,8 +135,8 @@ ALLOWED_PROXY_HEADERS = [
 CORS_ALLOW_ALL_ORIGINS = False
 if DEBUG:
     CORS_ALLOWED_ORIGINS = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
     ]
 else:
     CORS_ALLOWED_ORIGINS = os.getenv('TRUSTED_ORIGINS', '').split(',')
@@ -198,4 +208,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 # Site URL used for absolute URLs in OG tags, sitemaps, etc.
-SITE_URL = 'https://infrascope.ir'
+SITE_URL = 'https://qizilbash.ir'

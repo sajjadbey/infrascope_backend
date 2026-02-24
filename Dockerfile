@@ -8,16 +8,16 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install -r /app/requirements.txt
+    && pip install -i https://mirror-pypi.runflare.com/simple -r /app/requirements.txt
 
 COPY . /app
 
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-ENV DJANGO_SETTINGS_MODULE=iranicdna_backend.settings
+ENV DJANGO_SETTINGS_MODULE=infrascope_backend.settings
 
 EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["gunicorn", "iranicdna_backend.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["gunicorn", "infrascope_backend.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
