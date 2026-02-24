@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}IP / Domain Lookup | InfraScope{% endblock %}
+
+{% block meta_description %}Look up any IP address or domain name to find its ASN, provider, and network details within Iran's infrastructure.{% endblock %}
+{% block og_title %}IP / Domain Lookup | InfraScope{% endblock %}
+{% block og_description %}Find the ASN, provider, and network details for any IP address or domain name.{% endblock %}
+{% block og_url %}{{ SITE_URL }}/lookup/{% endblock %}
+
+{% block twitter_title %}IP / Domain Lookup | InfraScope{% endblock %}
+{% block twitter_description %}Find the ASN, provider, and network details for any IP or domain.{% endblock %}
+
+{% block nav_lookup %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Lookup Hero ── */
+    .lookup-hero {
+        text-align: center;
+        padding: 3rem 1rem 2rem;
+    }
+
+    .lookup-hero__icon {
+        font-size: 3rem;
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+
+    .lookup-hero__title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.4rem;
+    }
+
+    .lookup-hero__subtitle {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        max-width: 460px;
+        margin: 0 auto;
+    }
+
+    /* ── Search Form ── */
+    .lookup-form {
+        max-width: 600px;
+        margin: 2rem auto 0;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .lookup-form__input-wrap {
+        flex: 1;
+        position: relative;
+    }
+
+    .lookup-form__input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        font-family: var(--font-mono);
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius);
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .lookup-form__input::placeholder {
+        color: var(--text-muted);
+        font-family: var(--font-family);
+    }
+
+    .lookup-form__input:focus {
+        border-color: var(--color-brand);
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+    }
+
+    .lookup-form__btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--color-brand);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        white-space: nowrap;
+    }
+
+    .lookup-form__btn:hover {
+        background: var(--color-brand-hover);
+    }
+
+    .lookup-form__btn:active {
+        transform: scale(0.98);
+    }
+
+    .lookup-shortcuts {
+        text-align: center;
+        margin-top: 0.75rem;
+    }
+
+    .lookup-shortcuts__link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: var(--radius-sm);
+        transition: color 0.2s, background 0.2s;
+        text-decoration: none;
+    }
+
+    .lookup-shortcuts__link:hover {
+        color: var(--color-brand);
+        background: var(--color-brand-light);
+        text-decoration: none;
+    }
+
+    /* ── Result Card ── */
+    .lookup-result {
+        max-width: 600px;
+        margin: 2rem auto 0;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .result-header__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--color-brand-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .result-header__ip {
+        font-family: var(--font-mono);
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .result-header__provider {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 1px;
+    }
+
+    .result-header__badges {
+        margin-left: auto;
+        display: flex;
+        gap: 0.35rem;
+        flex-shrink: 0;
+    }
+
+    .result-body {
+        padding: 0;
+    }
+
+    .result-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.7rem 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.9rem;
+    }
+
+    .result-row:last-child {
+        border-bottom: none;
+    }
+
+    .result-row__label {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .result-row__value {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+    }
+
+    .result-row__value--text {
+        font-family: var(--font-family);
+    }
+
+    .result-footer {
+        padding: 0.75rem 1.25rem;
+        border-top: 1px solid var(--border-color);
+        text-align: center;
+    }
+
+    .result-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* ── Error Alert ── */
+    .lookup-alert {
+        max-width: 600px;
+        margin: 2rem auto 0;
+        padding: 1rem 1.25rem;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    .lookup-alert--error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+    }
+
+    .lookup-alert__icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        line-height: 1;
+    }
+
+    .lookup-alert__text {
+        font-size: 0.9rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+
+    .lookup-alert__ip {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        background: rgba(0, 0, 0, 0.06);
+        padding: 0.1rem 0.4rem;
+        border-radius: 3px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+        .lookup-hero {
+            padding: 2rem 1rem 1.5rem;
+        }
+
+        .lookup-hero__title {
+            font-size: 1.4rem;
+        }
+
+        .lookup-form {
+            flex-direction: column;
+        }
+
+        .lookup-form__btn {
+            padding: 0.75rem;
+        }
+
+        .result-header {
+            flex-wrap: wrap;
+        }
+
+        .result-header__badges {
+            margin-left: 0;
+            margin-top: 0.5rem;
+            flex-basis: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ── Hero ── -->
+<div class="lookup-hero">
+    <span class="lookup-hero__icon">🔍</span>
+    <h1 class="lookup-hero__title">IP / Domain Lookup</h1>
+    <p class="lookup-hero__subtitle">Find the ASN, provider, and network details for any IP address or domain name</p>
+
+    <form class="lookup-form" method="get" action="{% url 'lookup_ip' %}">
+        <div class="lookup-form__input-wrap">
+            <input
+                class="lookup-form__input"
+                type="text"
+                name="ip"
+                placeholder="Enter an IP or domain (e.g. 46.167.128.1, example.com)"
+                value="{{ query_ip|default:'' }}"
+                autofocus
+                autocomplete="off"
+            />
+        </div>
+        <button class="lookup-form__btn" type="submit">Lookup</button>
+    </form>
+
+    {% if client_ip %}
+    <div class="lookup-shortcuts">
+        <a class="lookup-shortcuts__link" href="{% url 'lookup_ip' %}?ip={{ client_ip }}">
+            ⚡ Use my IP ({{ client_ip }})
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ── Error ── -->
+{% if error %}
+<div class="lookup-alert lookup-alert--error">
+    <span class="lookup-alert__icon">⚠️</span>
+    <div class="lookup-alert__text">
+        {{ error }}{% if query_ip %}: <span class="lookup-alert__ip">{{ query_ip }}</span>{% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ── Result ── -->
+{% if result %}
+<div class="lookup-result">
+    <div class="card">
+        <div class="result-header">
+            <div class="result-header__icon">🌐</div>
+            <div>
+                <div class="result-header__ip">{% if resolved_domain %}{{ resolved_domain }} → {% endif %}{{ result.ip }}</div>
+                <div class="result-header__provider">{{ result.provider }}</div>
+            </div>
+            <div class="result-header__badges">
+                <span class="badge badge--info">{{ result.network_type }}</span>
+                <span class="badge badge--success">{{ result.status }}</span>
+            </div>
+        </div>
+
+        <div class="result-body">
+            <div class="result-row">
+                <span class="result-row__label">IP Address</span>
+                <span class="result-row__value">{{ result.ip }}</span>
+            </div>
+            <div class="result-row">
+                <span class="result-row__label">Prefix</span>
+                <span class="result-row__value">{{ result.prefix }}</span>
+            </div>
+            <div class="result-row">
+                <span class="result-row__label">ASN</span>
+                <span class="result-row__value">AS{{ result.asn }}</span>
+            </div>
+            <div class="result-row">
+                <span class="result-row__label">Provider</span>
+                <span class="result-row__value result-row__value--text">{{ result.provider }}</span>
+            </div>
+            <div class="result-row">
+                <span class="result-row__label">Network Type</span>
+                <span class="result-row__value result-row__value--text">{{ result.network_type }}</span>
+            </div>
+            <div class="result-row">
+                <span class="result-row__label">Status</span>
+                <span class="result-row__value result-row__value--text">{{ result.status }}</span>
+            </div>
+        </div>
+
+        <div class="result-footer">
+            <a class="btn btn--primary" href="{% url 'asn_detail' result.asn %}">
+                View AS{{ result.asn }} Details →
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

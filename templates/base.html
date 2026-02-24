@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}InfraScope{% endblock %}</title>
+
+  <!-- ── SEO Meta ── -->
+  <meta name="description" content="{% block meta_description %}InfraScope — Explore and analyze Iran's network infrastructure, ASN topology, IP lookups, and BGP routing paths.{% endblock %}">
+
+  <!-- ── OpenGraph ── -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="InfraScope">
+  <meta property="og:title" content="{% block og_title %}InfraScope — Iran Network Infrastructure Analysis{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Explore Iran's ASN topology, IP lookups, and BGP routing paths.{% endblock %}">
+  <meta property="og:image" content="{% block og_image %}{{ SITE_URL }}/og/default.png{% endblock %}">
+  <meta property="og:url" content="{% block og_url %}{{ SITE_URL }}{% endblock %}">
+
+  <!-- ── Twitter / X Card ── -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}InfraScope — Iran Network Infrastructure{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}Explore Iran's ASN topology, IP lookups, and BGP routing paths.{% endblock %}">
+  <meta name="twitter:image" content="{% block twitter_image %}{{ SITE_URL }}/og/default.png{% endblock %}">
+
+  <!-- ── JSON-LD ── -->
+  {% block jsonld %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "InfraScope",
+    "description": "Iran's Network Infrastructure Analysis — ASN topology, IP lookups, and BGP routing.",
+    "url": "{{ SITE_URL }}"
+  }
+  </script>
+  {% endblock %}
+
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+  <!-- ── Site Header ── -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="{% url 'home' %}" class="site-header__brand">
+        <span class="site-header__logo">🌐</span>
+        <span class="site-header__title">Infra<span>Scope</span></span>
+      </a>
+      <nav class="site-header__nav">
+        {% block nav_items %}
+        <a href="{% url 'home' %}" class="{% block nav_home %}{% endblock %}">Home</a>
+        <a href="{% url 'asn_full_topology' %}" class="{% block nav_topology %}{% endblock %}">Topology</a>
+        <a href="{% url 'lookup_ip' %}" class="{% block nav_lookup %}{% endblock %}">IP Lookup</a>
+        {% endblock %}
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Page Content ── -->
+  {% block content_wrapper %}
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+  {% endblock %}
+
+  <!-- ── Site Footer ── -->
+  {% block footer %}
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <span class="site-footer__text">InfraScope — Iran's Network Infrastructure Analysis</span>
+      <div class="site-footer__links">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'asn_full_topology' %}">Topology</a>
+        <a href="{% url 'lookup_ip' %}">IP Lookup</a>
+      </div>
+    </div>
+  </footer>
+  {% endblock %}
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

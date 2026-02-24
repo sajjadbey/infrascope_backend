@@ -1,0 +1,1283 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}ASN Full Network Topology | InfraScope{% endblock %}
+
+{% block body_class %}topology-page{% endblock %}
+
+{% block nav_topology %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Topology-specific: full-screen layout ── */
+    .topology-page {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .topology-page .page-content {
+        padding: 0;
+        max-width: none;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* ── Pathfinder bar ── */
+    .pathfinder-bar {
+        background: var(--bg-surface);
+        padding: 0.5rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+        flex-wrap: wrap;
+    }
+
+    .pathfinder {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pf-field {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pf-field input {
+        width: 100%;
+        padding: 0.45rem 0.65rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        font-family: var(--font-family);
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .pf-field input::placeholder { color: var(--text-muted); }
+
+    .pf-field input:focus {
+        border-color: var(--border-focus);
+        box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+    }
+
+    .pf-arrow {
+        color: var(--text-muted);
+        font-size: 1rem;
+        flex-shrink: 0;
+        user-select: none;
+    }
+
+    .pf-actions {
+        display: flex;
+        gap: 0.35rem;
+        flex-shrink: 0;
+    }
+
+    .search-btn {
+        padding: 0.45rem 0.85rem;
+        border-radius: 6px;
+        border: none;
+        background: var(--color-brand);
+        color: #fff;
+        font-size: 0.825rem;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.2s;
+    }
+
+    .search-btn:hover { background: var(--color-brand-hover); }
+
+    .clear-btn {
+        padding: 0.45rem 0.65rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        font-size: 0.825rem;
+        cursor: pointer;
+        white-space: nowrap;
+        display: none;
+        transition: border-color 0.2s, color 0.2s;
+    }
+
+    .clear-btn:hover { border-color: var(--color-danger); color: var(--color-danger); }
+
+    /* ── Legend toggle button ── */
+    .legend-toggle {
+        display: none;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* ── Toast ── */
+    .search-status {
+        position: fixed;
+        top: 8rem;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.6rem 1.25rem;
+        border-radius: var(--radius);
+        font-size: 0.85rem;
+        font-weight: 500;
+        z-index: 100;
+        display: none;
+        box-shadow: var(--shadow-md);
+        white-space: nowrap;
+    }
+
+    .search-status.error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .search-status.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .search-status.info    { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+
+    /* ── Graph container ── */
+    #cy {
+        width: 100%;
+        flex: 1;
+        position: relative;
+        background: var(--bg-page);
+    }
+
+    /* ── Loading overlay ── */
+    .loading-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-page);
+        z-index: 50;
+        gap: 1rem;
+    }
+
+    .loading-overlay .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--border-color);
+        border-top-color: var(--color-brand);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-overlay span { color: var(--text-secondary); font-size: 0.9rem; }
+
+    /* ── Legend ── */
+    .legend {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--bg-surface);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius);
+        font-size: 0.85rem;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        z-index: 10;
+        color: var(--text-primary);
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; margin: 0.4rem 0; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid; }
+    .count { color: var(--text-muted); font-weight: 600; margin-left: auto; padding-left: 0.5rem; }
+
+    /* ── Path info ── */
+    .path-info {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: var(--bg-surface);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius);
+        font-size: 0.85rem;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        max-width: 340px;
+        display: none;
+        z-index: 10;
+        color: var(--text-primary);
+    }
+
+    .path-info h3 { font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--color-brand); }
+    .path-info .paths-container { max-height: 60vh; overflow-y: auto; }
+    .path-info .paths-container::-webkit-scrollbar { width: 4px; }
+    .path-info .paths-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+    .path-info .path-section { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+    .path-info .path-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .path-info .path-label {
+        font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem;
+        display: flex; align-items: center; gap: 0.4rem;
+    }
+    .path-info .path-color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .path-info .path-label-text { color: var(--text-secondary); }
+    .path-info .path-list { list-style: none; padding: 0; }
+    .path-info .path-list li {
+        padding: 0.2rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.82rem;
+    }
+    .path-info .path-list li .arrow { color: var(--text-muted); font-weight: 700; }
+    .path-info .path-list li.is-origin { color: #16a34a; font-weight: 600; }
+    .path-info .path-list li.is-dest   { color: #7c3aed; font-weight: 600; }
+    .path-info .path-list li.is-tier1  { color: #dc2626; font-weight: 600; }
+
+    /* ── ASN Popup Card ── */
+    .asn-popup-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.25);
+        z-index: 200;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .asn-popup-overlay.visible { display: flex; }
+
+    .asn-popup {
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        width: 320px;
+        max-width: 90vw;
+        overflow: hidden;
+        animation: popIn 0.2s ease-out;
+    }
+
+    @keyframes popIn {
+        from { transform: scale(0.92); opacity: 0; }
+        to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .asn-popup-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 1rem 1rem 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .asn-popup-header .asn-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.3;
+    }
+
+    .asn-popup-header .asn-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    .asn-popup-close {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0 0.25rem;
+        line-height: 1;
+        transition: color 0.15s;
+    }
+
+    .asn-popup-close:hover { color: var(--text-primary); }
+
+    .asn-popup-body { padding: 0.75rem 1rem; }
+
+    .asn-popup-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.85rem;
+    }
+
+    .asn-popup-row:last-child { border-bottom: none; }
+    .asn-popup-row .label { font-weight: 600; color: var(--text-primary); }
+    .asn-popup-row .value { color: var(--text-secondary); }
+
+    .asn-popup-row .popup-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .popup-badge-active  { background: #dcfce7; color: #15803d; }
+    .popup-badge-type    { background: #dbeafe; color: #1e40af; }
+
+    .asn-popup-footer { padding: 0.5rem 1rem 1rem; }
+
+    .asn-popup-link {
+        display: block;
+        text-align: center;
+        padding: 0.55rem;
+        background: var(--color-brand);
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+
+    .asn-popup-link:hover { background: var(--color-brand-hover); color: #fff; text-decoration: none; }
+
+    .asn-popup-loading {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* ── Responsive — tablets ── */
+    @media (max-width: 768px) {
+        .pathfinder-bar {
+            padding: 0.5rem 0.75rem;
+            gap: 0.4rem;
+        }
+
+        .legend-toggle { display: block; }
+
+        .legend {
+            display: none;
+            top: auto;
+            bottom: 0.75rem;
+            right: 0.75rem;
+            left: 0.75rem;
+            font-size: 0.78rem;
+            padding: 0.5rem 0.75rem;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+
+        .legend.open { display: block; }
+
+        .path-info {
+            top: auto;
+            bottom: 0.75rem;
+            left: 0.75rem;
+            max-width: calc(100vw - 10rem);
+            max-height: 40vh;
+            font-size: 0.8rem;
+        }
+
+        .search-status {
+            top: auto;
+            bottom: 0.5rem;
+            left: 50%;
+            font-size: 0.8rem;
+            max-width: 90vw;
+            text-align: center;
+            white-space: normal;
+        }
+    }
+
+    /* ── Responsive — phones ── */
+    @media (max-width: 540px) {
+        .pathfinder-bar {
+            padding: 0.4rem 0.5rem;
+            gap: 0.3rem;
+        }
+
+        .pathfinder {
+            flex: 1 1 100%;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .pf-field {
+            flex: 1 1 calc(50% - 1rem);
+            min-width: 80px;
+        }
+
+        .pf-field input {
+            font-size: 0.82rem;
+            padding: 0.45rem 0.55rem;
+        }
+
+        .pf-arrow { font-size: 0.85rem; }
+        .search-btn { padding: 0.45rem 0.65rem; font-size: 0.8rem; }
+        .clear-btn { padding: 0.45rem 0.5rem; font-size: 0.8rem; }
+
+        .legend {
+            bottom: 0.5rem;
+            right: 0.5rem;
+            left: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .path-info {
+            left: 0.5rem;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            max-width: none;
+            max-height: 35vh;
+            font-size: 0.78rem;
+        }
+
+        .path-info .paths-container { max-height: 28vh; }
+        .asn-popup { width: 290px; }
+    }
+</style>
+{% endblock %}
+
+{% block content_wrapper %}
+<main class="page-content">
+    <!-- ── Pathfinder Bar ── -->
+    <div class="pathfinder-bar">
+        <div class="pathfinder">
+            <div class="pf-field">
+                <input type="text" id="originInput" placeholder="Origin (ASN / IP / Domain)" autocomplete="off" />
+            </div>
+            <span class="pf-arrow">→</span>
+            <div class="pf-field">
+                <input type="text" id="destInput" placeholder="Destination (ASN / IP / Domain)" autocomplete="off" />
+            </div>
+            <div class="pf-actions">
+                <button class="search-btn" id="searchBtn">Find Path</button>
+                <button class="clear-btn" id="clearBtn">Clear</button>
+            </div>
+        </div>
+        <button class="legend-toggle" id="legendToggle">Legend ▼</button>
+    </div>
+
+    <div class="search-status" id="searchStatus"></div>
+
+    <div id="cy">
+        <div class="loading-overlay" id="loading">
+            <div class="spinner"></div>
+            <span>Loading topology…</span>
+        </div>
+
+        <div class="path-info" id="pathInfo">
+            <h3 id="pathTitle">🔍 Path Finder</h3>
+            <div class="paths-container" id="pathsContainer"></div>
+        </div>
+
+        <div class="legend" id="legendPanel">
+        <div style="font-weight:600;margin-bottom:0.5rem">Node Types</div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#ef4444;border-color:#991b1b"></div>
+            Tier-1 (no upstreams) <span id="cnt-tier1" class="count"></span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#3b82f6;border-color:#1d4ed8"></div>
+            Transit <span id="cnt-transit" class="count"></span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#22c55e;border-color:#166534"></div>
+            Origin (leaf) <span id="cnt-origin" class="count"></span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#eab308;border-color:#a16207"></div>
+            Standalone <span id="cnt-standalone" class="count"></span>
+        </div>
+        <div class="legend-item" id="legendSearchOrigin" style="display:none">
+            <div class="legend-dot" style="background:#22c55e;border-color:#15803d"></div>
+            Origin (searched)
+        </div>
+        <div class="legend-item" id="legendSearchDest" style="display:none">
+            <div class="legend-dot" style="background:#8b5cf6;border-color:#6d28d9"></div>
+            Destination
+        </div>
+        <div class="legend-item" id="legendHighlight" style="display:none">
+            <div class="legend-dot" style="background:#f97316;border-color:#c2410c"></div>
+            Path (transit)
+        </div>
+    </div><!-- end #cy -->
+
+    <!-- ASN Popup Overlay -->
+    <div class="asn-popup-overlay" id="asnPopupOverlay">
+        <div class="asn-popup" id="asnPopup">
+            <div id="asnPopupContent">
+                <div class="asn-popup-loading">Loading…</div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
+<script>
+(function () {
+  var cy = null;
+
+  /* ── Raw data ── */
+  var rawNodes = [];
+  var rawEdges = [];
+  var nodeRoleMap = {};
+  var asnNumToNodeId = {};
+  var upstreamAdj = {};
+  var biAdj = {};
+  var edgeLookup = {};
+
+  /* ── DOM refs ── */
+  var originInput     = document.getElementById('originInput');
+  var destInput       = document.getElementById('destInput');
+  var searchBtn       = document.getElementById('searchBtn');
+  var clearBtn        = document.getElementById('clearBtn');
+  var statusEl        = document.getElementById('searchStatus');
+  var pathInfoEl      = document.getElementById('pathInfo');
+  var pathTitleEl     = document.getElementById('pathTitle');
+  var pathsContainer  = document.getElementById('pathsContainer');
+  var legendSearchOrig = document.getElementById('legendSearchOrigin');
+  var legendSearchDest = document.getElementById('legendSearchDest');
+  var legendHigh      = document.getElementById('legendHighlight');
+  var loadingEl       = document.getElementById('loading');
+  var popupOverlay    = document.getElementById('asnPopupOverlay');
+  var popupContent    = document.getElementById('asnPopupContent');
+  var legendToggleBtn = document.getElementById('legendToggle');
+  var legendPanel     = document.getElementById('legendPanel');
+
+  /* ── Legend toggle ── */
+  legendToggleBtn.addEventListener('click', function () {
+    var isOpen = legendPanel.classList.toggle('open');
+    legendToggleBtn.textContent = isOpen ? 'Legend ▲' : 'Legend ▼';
+  });
+
+  var pathColors = [
+    '#f97316', '#38bdf8', '#a78bfa', '#facc15', '#f472b6',
+    '#2dd4bf', '#fb923c', '#818cf8', '#4ade80', '#e879f9',
+  ];
+
+  function showStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = 'search-status ' + type;
+    statusEl.style.display = 'block';
+    clearTimeout(showStatus._t);
+    showStatus._t = setTimeout(function () { statusEl.style.display = 'none'; }, 4000);
+  }
+
+  function resetHighlights() {
+    if (!cy) return;
+    cy.batch(function () {
+      cy.elements().removeClass('highlighted highlight-origin highlight-dest highlight-tier1 dimmed');
+      cy.edges().removeStyle();
+    });
+    pathInfoEl.style.display = 'none';
+    pathsContainer.innerHTML = '';
+    clearBtn.style.display = 'none';
+    legendSearchOrig.style.display = 'none';
+    legendSearchDest.style.display = 'none';
+    legendHigh.style.display = 'none';
+  }
+
+  function looksLikeIP(str) {
+    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(str)) return true;
+    if (str.indexOf(':') !== -1 && (str.match(/:/g) || []).length >= 2) return true;
+    return false;
+  }
+
+  function looksLikeDomain(str) {
+    if (/^\d+$/.test(str)) return false;
+    if (/^as\d+$/i.test(str)) return false;
+    if (looksLikeIP(str)) return false;
+    // Must contain at least one dot and valid domain chars
+    return /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$/.test(str);
+  }
+
+  function resolveQueryToNodeId(query) {
+    if (!query) return null;
+    var numQuery = query.replace(/^as/i, '');
+    if (/^\d+$/.test(numQuery)) {
+      return asnNumToNodeId[parseInt(numQuery, 10)] || null;
+    }
+    for (var i = 0; i < rawNodes.length; i++) {
+      var n = rawNodes[i];
+      if ((n.name || '').toLowerCase().indexOf(query.toLowerCase()) !== -1 ||
+          (n.label || '').toLowerCase().indexOf(query.toLowerCase()) !== -1) {
+        return 'n' + n.id;
+      }
+    }
+    return null;
+  }
+
+  function resolveIPOrDomain(value) {
+    return fetch("{% url 'lookup_ip' %}?ip=" + encodeURIComponent(value), {
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) throw new Error(data.error);
+        return { asn: String(data.asn), provider: data.provider, ip: data.ip };
+      });
+  }
+
+  /* ── ASN Popup ── */
+  function openAsnPopup(asnNumber) {
+    popupContent.innerHTML = '<div class="asn-popup-loading">Loading…</div>';
+    popupOverlay.classList.add('visible');
+
+    fetch('/' + asnNumber + '/summary/')
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        var statusClass = (d.network_status || '').toLowerCase().indexOf('active') !== -1 ? 'popup-badge-active' : 'popup-badge-type';
+        popupContent.innerHTML =
+          '<div class="asn-popup-header">' +
+            '<div>' +
+              '<div class="asn-title">AS' + d.asn_number + '</div>' +
+              '<div class="asn-subtitle">' + escapeHtml(d.name) + '</div>' +
+            '</div>' +
+            '<button class="asn-popup-close" id="popupCloseBtn">&times;</button>' +
+          '</div>' +
+          '<div class="asn-popup-body">' +
+            '<div class="asn-popup-row"><span class="label">Type</span><span class="popup-badge popup-badge-type">' + escapeHtml(d.network_type) + '</span></div>' +
+            '<div class="asn-popup-row"><span class="label">Status</span><span class="popup-badge ' + statusClass + '">' + escapeHtml(d.network_status) + '</span></div>' +
+            '<div class="asn-popup-row"><span class="label">Registrar</span><span class="value">' + escapeHtml(d.registrar) + '</span></div>' +
+            '<div class="asn-popup-row"><span class="label">Registered To</span><span class="value">' + escapeHtml(d.registered_to) + '</span></div>' +
+            '<div class="asn-popup-row"><span class="label">Upstreams</span><span class="value">' + d.upstreams_count + '</span></div>' +
+            '<div class="asn-popup-row"><span class="label">Downstreams</span><span class="value">' + d.downstreams_count + '</span></div>' +
+            '<div class="asn-popup-row"><span class="label">IPv4 Prefixes</span><span class="value">' + d.prefixes_v4 + '</span></div>' +
+            '<div class="asn-popup-row"><span class="label">IPv6 Prefixes</span><span class="value">' + d.prefixes_v6 + '</span></div>' +
+          '</div>' +
+          '<div class="asn-popup-footer">' +
+            '<a class="asn-popup-link" href="' + d.detail_url + '">View Full Details →</a>' +
+          '</div>';
+        document.getElementById('popupCloseBtn').addEventListener('click', closePopup);
+      })
+      .catch(function () {
+        popupContent.innerHTML =
+          '<div class="asn-popup-header">' +
+            '<div><div class="asn-title">Error</div></div>' +
+            '<button class="asn-popup-close" id="popupCloseBtn">&times;</button>' +
+          '</div>' +
+          '<div class="asn-popup-body">' +
+            '<div class="asn-popup-row"><span class="value">Could not load ASN details.</span></div>' +
+          '</div>';
+        document.getElementById('popupCloseBtn').addEventListener('click', closePopup);
+      });
+  }
+
+  function closePopup() { popupOverlay.classList.remove('visible'); }
+  popupOverlay.addEventListener('click', function (e) {
+    if (e.target === popupOverlay) closePopup();
+  });
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str || ''));
+    return div.innerHTML;
+  }
+
+  /* ── DFS: find ALL paths following upstream edges to any tier-1 node ── */
+  function findAllPathsToTier1(startCyId, maxDepth) {
+    maxDepth = maxDepth || 10;
+    var allPaths = [];
+    function dfs(current, currentPath, visitedOnPath) {
+      if (nodeRoleMap[current] === 'tier1' && current !== startCyId) {
+        allPaths.push(currentPath.slice());
+        return;
+      }
+      if (currentPath.length > maxDepth) return;
+      var neighbors = upstreamAdj[current] || [];
+      for (var i = 0; i < neighbors.length; i++) {
+        var next = neighbors[i];
+        if (visitedOnPath[next]) continue;
+        currentPath.push(next);
+        visitedOnPath[next] = true;
+        dfs(next, currentPath, visitedOnPath);
+        currentPath.pop();
+        visitedOnPath[next] = false;
+      }
+    }
+    var visited = {};
+    visited[startCyId] = true;
+    dfs(startCyId, [startCyId], visited);
+    return allPaths;
+  }
+
+  function bfsShortestPath(startId, endId) {
+    if (startId === endId) return [startId];
+    var queue = [startId];
+    var visited = {};
+    var parent = {};
+    visited[startId] = true;
+    parent[startId] = null;
+    while (queue.length > 0) {
+      var current = queue.shift();
+      var neighbors = biAdj[current] || [];
+      for (var i = 0; i < neighbors.length; i++) {
+        var next = neighbors[i];
+        if (visited[next]) continue;
+        visited[next] = true;
+        parent[next] = current;
+        if (next === endId) {
+          var path = [];
+          var node = endId;
+          while (node !== null) { path.unshift(node); node = parent[node]; }
+          return path;
+        }
+        queue.push(next);
+      }
+    }
+    return null;
+  }
+
+  function bfsAllShortestPaths(startId, endId, maxPaths) {
+    maxPaths = maxPaths || 20;
+    if (startId === endId) return [[startId]];
+    var queue = [[startId]];
+    var visited = {};
+    visited[startId] = true;
+    var allPaths = [];
+    var shortestLen = Infinity;
+    while (queue.length > 0) {
+      var path = queue.shift();
+      var current = path[path.length - 1];
+      if (path.length > shortestLen) break;
+      if (current === endId) {
+        shortestLen = path.length;
+        allPaths.push(path);
+        if (allPaths.length >= maxPaths) break;
+        continue;
+      }
+      var neighbors = biAdj[current] || [];
+      for (var i = 0; i < neighbors.length; i++) {
+        var next = neighbors[i];
+        if (visited[next] && path.length + 1 > shortestLen) continue;
+        var newPath = path.concat(next);
+        if (newPath.length <= shortestLen) {
+          if (next === endId) {
+            shortestLen = newPath.length;
+            allPaths.push(newPath);
+            if (allPaths.length >= maxPaths) break;
+          } else {
+            queue.push(newPath);
+          }
+        }
+      }
+      visited[current] = true;
+    }
+    return allPaths;
+  }
+
+  /* ── Display paths between two specific ASNs ── */
+  function displayA2BPaths(startCyId, endCyId) {
+    resetHighlights();
+    if (startCyId === endCyId) {
+      var node = cy.getElementById(startCyId);
+      cy.batch(function () {
+        cy.elements().addClass('dimmed');
+        node.removeClass('dimmed').addClass('highlight-origin');
+      });
+      pathTitleEl.textContent = '🔍 Same Node';
+      pathsContainer.innerHTML = '<ul class="path-list"><li class="is-origin">● ' +
+        node.data('label').replace('\n', ' – ') + ' (origin = destination)</li></ul>';
+      pathInfoEl.style.display = 'block';
+      clearBtn.style.display = 'inline-block';
+      cy.animate({ center: { eles: node }, zoom: 1.5 }, { duration: 500 });
+      showStatus('Origin and destination are the same ASN.', 'info');
+      return;
+    }
+
+    var allPaths = bfsAllShortestPaths(startCyId, endCyId, 10);
+    if (!allPaths || allPaths.length === 0) {
+      showStatus('No path found between these two ASNs.', 'error');
+      return;
+    }
+
+    var allPathEles = cy.collection();
+    for (var p = 0; p < allPaths.length; p++) {
+      var path = allPaths[p];
+      for (var i = 0; i < path.length; i++) {
+        allPathEles = allPathEles.union(cy.getElementById(path[i]));
+      }
+      for (var i = 0; i < path.length - 1; i++) {
+        var src = path[i];
+        var tgt = path[i + 1];
+        var eid = edgeLookup[src + '→' + tgt] || edgeLookup[tgt + '→' + src];
+        if (eid) allPathEles = allPathEles.union(cy.getElementById(eid));
+      }
+    }
+
+    var startNode = cy.getElementById(startCyId);
+    var endNode = cy.getElementById(endCyId);
+
+    cy.batch(function () {
+      cy.elements().addClass('dimmed');
+      allPathEles.removeClass('dimmed').addClass('highlighted');
+      for (var p = 0; p < allPaths.length; p++) {
+        var path = allPaths[p];
+        var color = pathColors[p % pathColors.length];
+        for (var i = 0; i < path.length - 1; i++) {
+          var src = path[i];
+          var tgt = path[i + 1];
+          var eid = edgeLookup[src + '→' + tgt] || edgeLookup[tgt + '→' + src];
+          if (eid) {
+            cy.getElementById(eid).style({ 'line-color': color, 'target-arrow-color': color });
+          }
+        }
+      }
+      startNode.removeClass('highlighted').addClass('highlight-origin');
+      endNode.removeClass('highlighted').addClass('highlight-dest');
+    });
+
+    pathsContainer.innerHTML = '';
+    var hops = allPaths[0].length - 1;
+    pathTitleEl.textContent = '🔍 ' + allPaths.length + ' Path' + (allPaths.length > 1 ? 's' : '') +
+      ' (' + hops + ' hop' + (hops !== 1 ? 's' : '') + ')';
+
+    for (var p = 0; p < allPaths.length; p++) {
+      var path = allPaths[p];
+      var section = document.createElement('div');
+      section.className = 'path-section';
+      var color = pathColors[p % pathColors.length];
+
+      var label = document.createElement('div');
+      label.className = 'path-label';
+      var colorDot = document.createElement('span');
+      colorDot.className = 'path-color-dot';
+      colorDot.style.backgroundColor = color;
+      label.appendChild(colorDot);
+      var labelText = document.createElement('span');
+      labelText.className = 'path-label-text';
+      labelText.textContent = 'Path ' + (p + 1) + ' (' + (path.length - 1) + ' hop' + (path.length - 1 !== 1 ? 's' : '') + ')';
+      label.appendChild(labelText);
+      section.appendChild(label);
+
+      var ul = document.createElement('ul');
+      ul.className = 'path-list';
+      for (var i = 0; i < path.length; i++) {
+        var node = cy.getElementById(path[i]);
+        var li = document.createElement('li');
+        var nodeLabel = node.data('label').replace('\n', ' – ');
+        if (i === 0) {
+          li.className = 'is-origin';
+          li.textContent = '● ' + nodeLabel + ' (origin)';
+        } else if (i === path.length - 1) {
+          li.className = 'is-dest';
+          li.textContent = '● ' + nodeLabel + ' (destination)';
+        } else {
+          li.innerHTML = '<span class="arrow">↓ </span>' + escapeHtml(nodeLabel);
+        }
+        ul.appendChild(li);
+      }
+      section.appendChild(ul);
+      pathsContainer.appendChild(section);
+    }
+
+    pathInfoEl.style.display = 'block';
+    clearBtn.style.display = 'inline-block';
+    legendSearchOrig.style.display = 'flex';
+    legendSearchDest.style.display = 'flex';
+    legendHigh.style.display = 'flex';
+    cy.animate({ fit: { eles: allPathEles, padding: 60 } }, { duration: 500 });
+    showStatus(allPaths.length + ' shortest path(s), ' + hops + ' hop(s).', 'success');
+  }
+
+  function displayTier1Paths(startCyId) {
+    resetHighlights();
+    var startNode = cy.getElementById(startCyId);
+
+    if (nodeRoleMap[startCyId] === 'tier1') {
+      cy.batch(function () {
+        cy.elements().addClass('dimmed');
+        startNode.removeClass('dimmed').addClass('highlight-tier1');
+      });
+      pathTitleEl.textContent = '🔍 Paths to Tier-1';
+      pathsContainer.innerHTML = '<ul class="path-list"><li class="is-tier1">● ' +
+        startNode.data('label').replace('\n', ' – ') + ' (already Tier-1)</li></ul>';
+      pathInfoEl.style.display = 'block';
+      clearBtn.style.display = 'inline-block';
+      cy.animate({ center: { eles: startNode }, zoom: 1.5 }, { duration: 500 });
+      showStatus('This ASN is already a Tier-1 provider.', 'success');
+      return;
+    }
+
+    var allPaths = findAllPathsToTier1(startCyId);
+    if (!allPaths || allPaths.length === 0) {
+      showStatus('No path to Tier-1 found for this ASN.', 'error');
+      return;
+    }
+
+    var allPathEles = cy.collection();
+    for (var p = 0; p < allPaths.length; p++) {
+      var path = allPaths[p];
+      for (var i = 0; i < path.length; i++) {
+        allPathEles = allPathEles.union(cy.getElementById(path[i]));
+      }
+      for (var i = 0; i < path.length - 1; i++) {
+        var eid = edgeLookup[path[i] + '→' + path[i + 1]];
+        if (eid) allPathEles = allPathEles.union(cy.getElementById(eid));
+      }
+    }
+
+    allPaths.sort(function (a, b) { return a.length - b.length; });
+
+    var tier1NodeIds = {};
+    for (var p = 0; p < allPaths.length; p++) {
+      tier1NodeIds[allPaths[p][allPaths[p].length - 1]] = true;
+    }
+
+    var lastHopColorMap = {};
+    var lastHopIndex = 0;
+    for (var p = 0; p < allPaths.length; p++) {
+      var path = allPaths[p];
+      var edgeKey = path[path.length - 2] + '→' + path[path.length - 1];
+      if (!(edgeKey in lastHopColorMap)) {
+        lastHopColorMap[edgeKey] = pathColors[lastHopIndex % pathColors.length];
+        lastHopIndex++;
+      }
+    }
+
+    var defaultPathColor = '#f97316';
+    cy.batch(function () {
+      cy.elements().addClass('dimmed');
+      allPathEles.removeClass('dimmed').addClass('highlighted');
+      for (var p = 0; p < allPaths.length; p++) {
+        var path = allPaths[p];
+        for (var i = 0; i < path.length - 1; i++) {
+          var isLastHop = (i === path.length - 2);
+          var color = isLastHop
+            ? lastHopColorMap[path[i] + '→' + path[i + 1]]
+            : defaultPathColor;
+          var eid = edgeLookup[path[i] + '→' + path[i + 1]];
+          if (eid) {
+            cy.getElementById(eid).style({ 'line-color': color, 'target-arrow-color': color });
+          }
+        }
+      }
+      startNode.removeClass('highlighted').addClass('highlight-origin');
+      Object.keys(tier1NodeIds).forEach(function (id) {
+        cy.getElementById(id).removeClass('highlighted').addClass('highlight-tier1');
+      });
+    });
+
+    pathsContainer.innerHTML = '';
+    pathTitleEl.textContent = '🔍 ' + allPaths.length + ' Path' + (allPaths.length > 1 ? 's' : '') + ' to Tier-1';
+
+    for (var p = 0; p < allPaths.length; p++) {
+      var path = allPaths[p];
+      var section = document.createElement('div');
+      section.className = 'path-section';
+      var tier1Id = path[path.length - 1];
+      var pathColor = lastHopColorMap[path[path.length - 2] + '→' + tier1Id];
+
+      var label = document.createElement('div');
+      label.className = 'path-label';
+      var colorDot = document.createElement('span');
+      colorDot.className = 'path-color-dot';
+      colorDot.style.backgroundColor = pathColor;
+      label.appendChild(colorDot);
+      var labelText = document.createElement('span');
+      labelText.className = 'path-label-text';
+      var tier1Label = cy.getElementById(tier1Id).data('label').replace('\n', ' – ');
+      labelText.textContent = 'Path ' + (p + 1) + ' → ' + tier1Label + ' (' + (path.length - 1) + ' hop' + (path.length - 1 !== 1 ? 's' : '') + ')';
+      label.appendChild(labelText);
+      section.appendChild(label);
+
+      var ul = document.createElement('ul');
+      ul.className = 'path-list';
+      for (var i = 0; i < path.length; i++) {
+        var node = cy.getElementById(path[i]);
+        var li = document.createElement('li');
+        var nodeLabel = node.data('label').replace('\n', ' – ');
+        if (i === 0) {
+          li.className = 'is-origin';
+          li.textContent = '● ' + nodeLabel;
+        } else if (i === path.length - 1) {
+          li.className = 'is-tier1';
+          li.textContent = '● ' + nodeLabel + ' (Tier-1)';
+        } else {
+          li.innerHTML = '<span class="arrow">↓ </span>' + escapeHtml(nodeLabel);
+        }
+        ul.appendChild(li);
+      }
+      section.appendChild(ul);
+      pathsContainer.appendChild(section);
+    }
+
+    pathInfoEl.style.display = 'block';
+    clearBtn.style.display = 'inline-block';
+    legendSearchOrig.style.display = 'flex';
+    legendHigh.style.display = 'flex';
+    cy.animate({ fit: { eles: allPathEles, padding: 60 } }, { duration: 500 });
+
+    var uniqueTier1Count = Object.keys(tier1NodeIds).length;
+    showStatus(allPaths.length + ' path(s) to ' + uniqueTier1Count + ' Tier-1 provider(s).', 'success');
+  }
+
+  /* ── MAIN SEARCH HANDLER ── */
+  function doSearch() {
+    if (!cy) return;
+    var originRaw = originInput.value.trim();
+    var destRaw   = destInput.value.trim();
+
+    if (!originRaw) {
+      showStatus('Please enter an origin ASN, IP address, or domain.', 'error');
+      originInput.focus();
+      return;
+    }
+
+    var resolveOrigin, resolveDest;
+
+    if (looksLikeIP(originRaw) || looksLikeDomain(originRaw)) {
+      showStatus('Resolving origin…', 'info');
+      resolveOrigin = resolveIPOrDomain(originRaw).then(function (res) {
+        var label = looksLikeDomain(originRaw)
+          ? originRaw + ' → ' + res.ip + ' → AS' + res.asn
+          : 'IP ' + originRaw + ' → AS' + res.asn;
+        return { query: res.asn, label: label };
+      });
+    } else {
+      resolveOrigin = Promise.resolve({ query: originRaw.toLowerCase(), label: null });
+    }
+
+    if (destRaw && (looksLikeIP(destRaw) || looksLikeDomain(destRaw))) {
+      showStatus('Resolving…', 'info');
+      resolveDest = resolveIPOrDomain(destRaw).then(function (res) {
+        var label = looksLikeDomain(destRaw)
+          ? destRaw + ' → ' + res.ip + ' → AS' + res.asn
+          : 'IP ' + destRaw + ' → AS' + res.asn;
+        return { query: res.asn, label: label };
+      });
+    } else if (destRaw) {
+      resolveDest = Promise.resolve({ query: destRaw.toLowerCase(), label: null });
+    } else {
+      resolveDest = Promise.resolve(null);
+    }
+
+    Promise.all([resolveOrigin, resolveDest])
+      .then(function (results) {
+        var origin = results[0];
+        var dest   = results[1];
+
+        var originId = resolveQueryToNodeId(origin.query);
+        if (!originId || cy.getElementById(originId).empty()) {
+          showStatus('Origin ASN not found: "' + originRaw + '"', 'error');
+          return;
+        }
+        if (origin.label) showStatus(origin.label, 'info');
+
+        if (!dest) {
+          displayTier1Paths(originId);
+          return;
+        }
+
+        var destId = resolveQueryToNodeId(dest.query);
+        if (!destId || cy.getElementById(destId).empty()) {
+          showStatus('Destination ASN not found: "' + destRaw + '"', 'error');
+          return;
+        }
+        if (dest.label) showStatus(dest.label, 'info');
+        displayA2BPaths(originId, destId);
+      })
+      .catch(function (err) {
+        showStatus('Failed to resolve: ' + (err.message || err), 'error');
+      });
+  }
+
+  searchBtn.addEventListener('click', doSearch);
+  originInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { destInput.focus(); } });
+  destInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(); });
+  clearBtn.addEventListener('click', function () {
+    resetHighlights();
+    originInput.value = '';
+    destInput.value = '';
+    originInput.focus();
+    if (cy) cy.animate({ fit: { padding: 30 } }, { duration: 400 });
+  });
+
+  /* ── LOAD DATA & INIT CYTOSCAPE ── */
+  fetch("{% url 'asn_topology_data' %}")
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (data) {
+      rawNodes = data.nodes;
+      rawEdges = data.edges;
+
+      rawNodes.forEach(function (n) {
+        var cyId = 'n' + n.id;
+        nodeRoleMap[cyId] = n.role || 'standalone';
+        if (n.asn_number) asnNumToNodeId[n.asn_number] = cyId;
+        biAdj[cyId] = [];
+      });
+
+      rawEdges.forEach(function (e) {
+        var fromCy = 'n' + e.from;
+        var toCy   = 'n' + e.to;
+        if (!upstreamAdj[fromCy]) upstreamAdj[fromCy] = [];
+        upstreamAdj[fromCy].push(toCy);
+        if (!biAdj[fromCy]) biAdj[fromCy] = [];
+        if (!biAdj[toCy]) biAdj[toCy] = [];
+        biAdj[fromCy].push(toCy);
+        biAdj[toCy].push(fromCy);
+      });
+
+      var inDeg = {};
+      data.edges.forEach(function (e) { inDeg[e.to] = (inDeg[e.to] || 0) + 1; });
+      var maxIn = 1;
+      Object.values(inDeg).forEach(function (c) { if (c > maxIn) maxIn = c; });
+
+      var counts = { tier1: 0, transit: 0, origin: 0, standalone: 0 };
+      var elements = [];
+
+      data.nodes.forEach(function (n) {
+        var role = n.role || 'standalone';
+        counts[role] = (counts[role] || 0) + 1;
+        var incoming = inDeg[n.id] || 0;
+        var size = role === 'tier1' ? 40 : Math.round(12 + (incoming / maxIn) * 22);
+        var shortName = n.name && n.name.length > 22 ? n.name.substring(0, 22) + '…' : (n.name || '');
+        var shortLabel = 'AS' + (n.asn_number || n.id) + '\n' + shortName;
+
+        elements.push({
+          group: 'nodes',
+          data: {
+            id: 'n' + n.id,
+            label: shortLabel,
+            fullLabel: n.label,
+            role: role,
+            asn_number: n.asn_number,
+            name: n.name,
+            nodeSize: size
+          }
+        });
+      });
+
+      data.edges.forEach(function (e, i) {
+        var edgeId = 'e' + i;
+        var src = 'n' + e.from;
+        var tgt = 'n' + e.to;
+        edgeLookup[src + '→' + tgt] = edgeId;
+        elements.push({
+          group: 'edges',
+          data: { id: edgeId, source: src, target: tgt }
+        });
+      });
+
+      document.getElementById('cnt-tier1').textContent     = '(' + counts.tier1 + ')';
+      document.getElementById('cnt-transit').textContent    = '(' + counts.transit + ')';
+      document.getElementById('cnt-origin').textContent     = '(' + counts.origin + ')';
+      document.getElementById('cnt-standalone').textContent = '(' + counts.standalone + ')';
+
+      cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: elements,
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'width': 'data(nodeSize)', 'height': 'data(nodeSize)',
+              'label': 'data(label)', 'font-size': 9, 'color': '#475569',
+              'text-wrap': 'wrap', 'text-valign': 'bottom', 'text-margin-y': 4,
+              'text-max-width': 80, 'min-zoomed-font-size': 24,
+              'border-width': 2, 'border-opacity': 1,
+              'text-outline-color': '#f1f5f9', 'text-outline-width': 2
+            }
+          },
+          { selector: 'node[role="tier1"]',      style: { 'background-color': '#ef4444', 'border-color': '#991b1b', 'min-zoomed-font-size': 6, 'font-size': 10 }},
+          { selector: 'node[role="transit"]',     style: { 'background-color': '#3b82f6', 'border-color': '#1d4ed8', 'min-zoomed-font-size': 14 }},
+          { selector: 'node[role="origin"]',      style: { 'background-color': '#22c55e', 'border-color': '#166534', 'min-zoomed-font-size': 24 }},
+          { selector: 'node[role="standalone"]',  style: { 'background-color': '#eab308', 'border-color': '#a16207', 'min-zoomed-font-size': 28 }},
+          {
+            selector: 'edge',
+            style: {
+              'width': 1.5, 'line-color': '#cbd5e1', 'target-arrow-color': '#cbd5e1',
+              'target-arrow-shape': 'triangle', 'curve-style': 'bezier',
+              'arrow-scale': 0.7, 'opacity': 0.5,
+              'line-style': 'dashed', 'line-dash-pattern': [6, 4], 'line-dash-offset': 0
+            }
+          },
+          {
+            selector: 'node.highlighted',
+            style: {
+              'background-color': '#f97316', 'border-color': '#c2410c', 'border-width': 4,
+              'color': '#1e293b', 'font-size': 11, 'min-zoomed-font-size': 0,
+              'text-outline-color': '#fff', 'text-outline-width': 2,
+              'z-index': 9999, 'opacity': 1
+            }
+          },
+          {
+            selector: 'node.highlight-origin',
+            style: {
+              'background-color': '#22c55e', 'border-color': '#15803d', 'border-width': 4,
+              'width': 36, 'height': 36, 'color': '#1e293b', 'font-size': 11,
+              'min-zoomed-font-size': 0, 'text-outline-color': '#fff', 'text-outline-width': 2,
+              'z-index': 10000, 'opacity': 1
+            }
+          },
+          {
+            selector: 'node.highlight-dest',
+            style: {
+              'background-color': '#8b5cf6', 'border-color': '#6d28d9', 'border-width': 4,
+              'width': 36, 'height': 36, 'color': '#1e293b', 'font-size': 11,
+              'min-zoomed-font-size': 0, 'text-outline-color': '#fff', 'text-outline-width': 2,
+              'z-index': 10000, 'opacity': 1
+            }
+          },
+          {
+            selector: 'node.highlight-tier1',
+            style: {
+              'background-color': '#ef4444', 'border-color': '#991b1b', 'border-width': 4,
+              'color': '#1e293b', 'font-size': 11, 'min-zoomed-font-size': 0,
+              'text-outline-color': '#fff', 'text-outline-width': 2,
+              'z-index': 10000, 'opacity': 1
+            }
+          },
+          {
+            selector: 'edge.highlighted',
+            style: {
+              'line-color': '#f97316', 'target-arrow-color': '#f97316',
+              'width': 3, 'opacity': 1, 'z-index': 9999,
+              'line-style': 'dashed', 'line-dash-pattern': [8, 5], 'line-dash-offset': 0
+            }
+          },
+          { selector: 'node.dimmed', style: { 'opacity': 0.12 }},
+          { selector: 'edge.dimmed', style: { 'opacity': 0.06 }}
+        ],
+        layout: {
+          name: 'cose', animate: false, nodeDimensionsIncludeLabels: false,
+          nodeOverlap: 40, idealEdgeLength: function () { return 140; },
+          nodeRepulsion: function () { return 900000; },
+          numIter: 300, gravity: 50, randomize: true
+        },
+        textureOnViewport: false, hideEdgesOnViewport: true, motionBlur: false,
+        wheelSensitivity: 0.3, minZoom: 0.02, maxZoom: 4,
+        pixelRatio: Math.min(window.devicePixelRatio || 1, 2)
+      });
+
+      cy.on('tap', 'node', function (evt) {
+        var nodeData = evt.target.data();
+        if (nodeData.asn_number) openAsnPopup(nodeData.asn_number);
+      });
+
+      cy.on('layoutstop', function () { loadingEl.style.display = 'none'; });
+      setTimeout(function () { loadingEl.style.display = 'none'; }, 8000);
+      console.log('Cytoscape ready:', data.nodes.length, 'nodes,', data.edges.length, 'edges');
+    })
+    .catch(function (err) {
+      loadingEl.innerHTML =
+        '<span style="color:var(--color-danger);font-size:1rem">Error loading topology: ' + err.message + '</span>';
+    });
+})();
+</script>
+{% endblock %}
