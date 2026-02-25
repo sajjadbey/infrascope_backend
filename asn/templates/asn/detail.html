@@ -5,31 +5,35 @@
 {% block meta_description %}AS{{ asn.asn_number }} ({{ asn.name }}) — {{ asn.network_type.name }}, {{ asn.network_status.name }}. View BGP topology, upstream providers, and IP prefixes.{% endblock %}
 
 {% block og_title %}AS{{ asn.asn_number }} – {{ asn.name }} | InfraScope{% endblock %}
-{% block og_description %}{{ asn.network_type.name }} — {{ asn.network_status.name }}. Explore BGP relationships, upstream/downstream providers, and IP prefix allocations.{% endblock %}
-{% block og_image %}{{ SITE_URL }}/og/asn/{{ asn.asn_number }}.png{% endblock %}
+{% block og_description %}AS{{ asn.asn_number }} ({{ asn.name }}) — {{ asn.network_type.name }}, {{ asn.network_status.name }}. Upstreams: {{ upstreams|length }}, Downstreams: {{ downstreams|length }}, Prefixes: {{ prefixes_v4|length }} v4 / {{ prefixes_v6|length }} v6. {% if asn.description %}{{ asn.description|truncatechars:100 }}{% endif %}{% endblock %}
 {% block og_url %}{{ SITE_URL }}/{{ asn.asn_number }}/{% endblock %}
 
 {% block twitter_title %}AS{{ asn.asn_number }} – {{ asn.name }}{% endblock %}
-{% block twitter_description %}{{ asn.network_type.name }} — {{ asn.network_status.name }}. View BGP topology and IP prefixes on InfraScope.{% endblock %}
-{% block twitter_image %}{{ SITE_URL }}/og/asn/{{ asn.asn_number }}.png{% endblock %}
+{% block twitter_description %}Explore AS{{ asn.asn_number }} ({{ asn.name }}) network infrastructure on InfraScope. {{ upstreams|length }} upstreams, {{ downstreams|length }} downstreams. {% if asn.description %}{{ asn.description|truncatechars:100 }}{% endif %}{% endblock %}
 
 {% block jsonld %}
-<script type="application/ld+json">{{ jsonld|safe }}</script>
+<script type="application/ld+json">
+  {{ jsonld|safe }}
+</script>
 {% endblock %}
 
 {% block nav_topology %}{% endblock %}
-
 {% block content %}
-<div style="margin-bottom: 1rem;">
-  <a href="{% url 'asn_full_topology' %}" class="btn btn--outline">← Back to Topology</a>
+<div style="margin-bottom: 1rem">
+  <a href="{% url 'asn_full_topology' %}" class="btn btn--outline"
+    >← Back to Topology</a
+  >
 </div>
 
 <!-- ── ASN Header ── -->
-<div class="card" style="margin-bottom: 1.5rem;">
-  <div class="card__body" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-    <h1 class="heading-xl" style="margin: 0;">AS{{ asn.asn_number }}</h1>
-    <span class="text-secondary" style="font-size: 1.1rem;">{{ asn.name }}</span>
-    <div style="display: flex; gap: 0.4rem; margin-left: auto;">
+<div class="card" style="margin-bottom: 1.5rem">
+  <div
+    class="card__body"
+    style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap"
+  >
+    <h1 class="heading-xl" style="margin: 0">AS{{ asn.asn_number }}</h1>
+    <span class="text-secondary" style="font-size: 1.1rem">{{ asn.name }}</span>
+    <div style="display: flex; gap: 0.4rem; margin-left: auto">
       <span class="badge badge--info">{{ asn.network_type.name }}</span>
       <span class="badge badge--success">{{ asn.network_status.name }}</span>
     </div>
@@ -37,7 +41,9 @@
 </div>
 
 {% if asn.description %}
-<p class="text-secondary" style="margin-bottom: 1.5rem;">{{ asn.description }}</p>
+<p class="text-secondary" style="margin-bottom: 1.5rem">
+  {{ asn.description }}
+</p>
 {% endif %}
 
 <!-- ── Registration ── -->
@@ -47,9 +53,13 @@
   </div>
   <div class="card__body">
     <ul class="info-list">
-      <li><strong>Registered to</strong> {{ asn.registered_to|default:"—" }}</li>
+      <li>
+        <strong>Registered to</strong> {{ asn.registered_to|default:"—" }}
+      </li>
       <li><strong>Registrar</strong> {{ asn.registrar|default:"—" }}</li>
-      <li><strong>Registered on</strong> {{ asn.registered_on|default:"—" }}</li>
+      <li>
+        <strong>Registered on</strong> {{ asn.registered_on|default:"—" }}
+      </li>
     </ul>
   </div>
 </div>
@@ -60,40 +70,52 @@
     <h2 class="heading-md">BGP Relationships</h2>
   </div>
   <div class="card__body">
-
-    <h3 class="heading-md" style="margin-bottom: 0.5rem;">Upstreams</h3>
+    <h3 class="heading-md" style="margin-bottom: 0.5rem">Upstreams</h3>
     {% if upstreams %}
-      <ul class="peer-list" style="margin-bottom: 1.25rem;">
+    <ul class="peer-list" style="margin-bottom: 1.25rem">
       {% for a in upstreams %}
-        <li><a href="{% url 'asn_detail' a.asn_number %}">AS{{ a.asn_number }} – {{ a.name }}</a></li>
+      <li>
+        <a href="{% url 'asn_detail' a.asn_number %}"
+          >AS{{ a.asn_number }} – {{ a.name }}</a
+        >
+      </li>
       {% endfor %}
-      </ul>
+    </ul>
     {% else %}
-      <p class="text-muted" style="margin-bottom: 1.25rem;">None</p>
+    <p class="text-muted" style="margin-bottom: 1.25rem">None</p>
     {% endif %}
 
-    <h3 class="heading-md" style="margin-bottom: 0.5rem;">Peers (All Connected ASNs)</h3>
+    <h3 class="heading-md" style="margin-bottom: 0.5rem">
+      Peers (All Connected ASNs)
+    </h3>
     {% if peers %}
-      <ul class="peer-list" style="margin-bottom: 1.25rem;">
+    <ul class="peer-list" style="margin-bottom: 1.25rem">
       {% for a in peers %}
-        <li><a href="{% url 'asn_detail' a.asn_number %}">AS{{ a.asn_number }} – {{ a.name }}</a></li>
+      <li>
+        <a href="{% url 'asn_detail' a.asn_number %}"
+          >AS{{ a.asn_number }} – {{ a.name }}</a
+        >
+      </li>
       {% endfor %}
-      </ul>
+    </ul>
     {% else %}
-      <p class="text-muted" style="margin-bottom: 1.25rem;">No connected ASNs</p>
+    <p class="text-muted" style="margin-bottom: 1.25rem">No connected ASNs</p>
     {% endif %}
 
-    <h3 class="heading-md" style="margin-bottom: 0.5rem;">Downstreams</h3>
+    <h3 class="heading-md" style="margin-bottom: 0.5rem">Downstreams</h3>
     {% if downstreams %}
-      <ul class="peer-list">
+    <ul class="peer-list">
       {% for a in downstreams %}
-        <li><a href="{% url 'asn_detail' a.asn_number %}">AS{{ a.asn_number }} – {{ a.name }}</a></li>
+      <li>
+        <a href="{% url 'asn_detail' a.asn_number %}"
+          >AS{{ a.asn_number }} – {{ a.name }}</a
+        >
+      </li>
       {% endfor %}
-      </ul>
+    </ul>
     {% else %}
-      <p class="text-muted">None</p>
+    <p class="text-muted">None</p>
     {% endif %}
-
   </div>
 </div>
 
@@ -114,14 +136,18 @@
       <tbody>
         {% for p in prefixes_v4 %}
         <tr>
-          <td><code style="font-family: var(--font-mono); font-size: 0.85rem;">{{ p.cidr }}</code></td>
+          <td>
+            <code style="font-family: var(--font-mono); font-size: 0.85rem"
+              >{{ p.cidr }}</code
+            >
+          </td>
           <td class="text-secondary">{{ p.description|default:"—" }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% else %}
-      <p class="text-muted">No IPv4 prefixes</p>
+    <p class="text-muted">No IPv4 prefixes</p>
     {% endif %}
   </div>
 </div>
@@ -143,111 +169,149 @@
       <tbody>
         {% for p in prefixes_v6 %}
         <tr>
-          <td><code style="font-family: var(--font-mono); font-size: 0.85rem;">{{ p.cidr }}</code></td>
+          <td>
+            <code style="font-family: var(--font-mono); font-size: 0.85rem"
+              >{{ p.cidr }}</code
+            >
+          </td>
           <td class="text-secondary">{{ p.description|default:"—" }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% else %}
-      <p class="text-muted">No IPv6 prefixes</p>
+    <p class="text-muted">No IPv6 prefixes</p>
     {% endif %}
   </div>
 </div>
 
 <!-- ── Network Topology Graph ── -->
-<div class="card section" style="margin-bottom: 2rem;">
+<div class="card section" style="margin-bottom: 2rem">
   <div class="card__header">
     <h2 class="heading-md">Network Topology</h2>
   </div>
-  <div class="card__body" style="padding: 0;">
-    <div id="asn-graph" style="height: 500px;"></div>
+  <div class="card__body" style="padding: 0">
+    <div id="asn-graph" style="height: 500px"></div>
   </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <script>
-fetch("{% url 'asn_graph' asn.asn_number %}")
-  .then(r => r.json())
-  .then(data => {
+  fetch("{% url 'asn_graph' asn.asn_number %}")
+    .then((r) => r.json())
+    .then((data) => {
+      const nodes = new vis.DataSet(
+        data.nodes.map((n) => ({
+          id: n.id,
+          label: n.label,
+          shape: "box",
+          widthConstraint: { minimum: 180, maximum: 300 },
+          heightConstraint: { minimum: 60 },
+          margin: { top: 12, right: 16, bottom: 12, left: 16 },
+          borderWidth: 2,
+          borderRadius: 8,
+          color:
+            n.role === "origin"
+              ? {
+                  background: "#86efac",
+                  border: "#166534",
+                  highlight: { background: "#4ade80", border: "#15803d" },
+                }
+              : n.role === "tier1"
+                ? {
+                    background: "#bfdbfe",
+                    border: "#1e40af",
+                    highlight: { background: "#93c5fd", border: "#1d4ed8" },
+                  }
+                : {
+                    background: "#f1f5f9",
+                    border: "#3b82f6",
+                    highlight: { background: "#e0f2fe", border: "#2563eb" },
+                  },
+          shadow: {
+            enabled: true,
+            color: "rgba(0,0,0,0.15)",
+            size: 8,
+            x: 0,
+            y: 4,
+          },
+          font: {
+            size: 13,
+            face: "system-ui, -apple-system, sans-serif",
+            color: "#1e293b",
+            multi: "html",
+          },
+        })),
+      );
 
-    const nodes = new vis.DataSet(
-      data.nodes.map(n => ({
-        id: n.id,
-        label: n.label,
-        shape: "box",
-        widthConstraint: { minimum: 180, maximum: 300 },
-        heightConstraint: { minimum: 60 },
-        margin: { top: 12, right: 16, bottom: 12, left: 16 },
-        borderWidth: 2,
-        borderRadius: 8,
-        color:
-          n.role === "origin"
-            ? { background: "#86efac", border: "#166534", highlight: { background: "#4ade80", border: "#15803d" } }
-            : n.role === "tier1"
-            ? { background: "#bfdbfe", border: "#1e40af", highlight: { background: "#93c5fd", border: "#1d4ed8" } }
-            : { background: "#f1f5f9", border: "#3b82f6", highlight: { background: "#e0f2fe", border: "#2563eb" } },
-        shadow: { enabled: true, color: 'rgba(0,0,0,0.15)', size: 8, x: 0, y: 4 },
-        font: { size: 13, face: "system-ui, -apple-system, sans-serif", color: "#1e293b", multi: "html" }
-      }))
-    );
+      const edges = new vis.DataSet(
+        data.edges.map((e) => ({
+          from: e.from,
+          to: e.to,
+          arrows: { to: { enabled: true, type: "arrow", scaleFactor: 0.8 } },
+          smooth: {
+            type: "cubicBezier",
+            forceDirection: "horizontal",
+            roundness: 0.3,
+          },
+          color: { color: "#94a3b8", highlight: "#3b82f6", inherit: false },
+          width: 1.5,
+          selectionWidth: 2.5,
+        })),
+      );
 
-    const edges = new vis.DataSet(
-      data.edges.map(e => ({
-        from: e.from,
-        to: e.to,
-        arrows: { to: { enabled: true, type: "arrow", scaleFactor: 0.8 } },
-        smooth: { type: "cubicBezier", forceDirection: "horizontal", roundness: 0.3 },
-        color: { color: "#94a3b8", highlight: "#3b82f6", inherit: false },
-        width: 1.5,
-        selectionWidth: 2.5
-      }))
-    );
-
-    const options = {
-      layout: {
-        hierarchical: {
-          enabled: true,
-          direction: "LR",
-          nodeSpacing: 280,
-          levelSeparation: 350,
-          treeSpacing: 250,
-          blockShifting: true,
-          edgeMinimization: true,
-          parentCentralization: true,
-          sortMethod: "directed",
-          shakeTowards: "leaves"
-        }
-      },
-      physics: {
-        enabled: true,
-        hierarchicalRepulsion: {
-          centralGravity: 0.0,
-          leafSpringLength: 250,
-          leafSpringConstant: 0.01,
-          nodeDistance: 200,
-          springLength: 200
+      const options = {
+        layout: {
+          hierarchical: {
+            enabled: true,
+            direction: "LR",
+            nodeSpacing: 280,
+            levelSeparation: 350,
+            treeSpacing: 250,
+            blockShifting: true,
+            edgeMinimization: true,
+            parentCentralization: true,
+            sortMethod: "directed",
+            shakeTowards: "leaves",
+          },
         },
-        stabilization: { enabled: true, iterations: 100 }
-      },
-      interaction: {
-        dragNodes: true,
-        zoomView: true,
-        dragView: true,
-        hover: true,
-        tooltipDelay: 200,
-        hideEdgesOnDrag: false
-      },
-      nodes: { font: { size: 13, face: "system-ui, -apple-system, sans-serif", color: "#0f172a" } },
-      edges: { hoverWidth: 2, selectionWidth: 3 },
-      autoResize: true,
-      height: '100%',
-      width: '100%'
-    };
+        physics: {
+          enabled: true,
+          hierarchicalRepulsion: {
+            centralGravity: 0.0,
+            leafSpringLength: 250,
+            leafSpringConstant: 0.01,
+            nodeDistance: 200,
+            springLength: 200,
+          },
+          stabilization: { enabled: true, iterations: 100 },
+        },
+        interaction: {
+          dragNodes: true,
+          zoomView: true,
+          dragView: true,
+          hover: true,
+          tooltipDelay: 200,
+          hideEdgesOnDrag: false,
+        },
+        nodes: {
+          font: {
+            size: 13,
+            face: "system-ui, -apple-system, sans-serif",
+            color: "#0f172a",
+          },
+        },
+        edges: { hoverWidth: 2, selectionWidth: 3 },
+        autoResize: true,
+        height: "100%",
+        width: "100%",
+      };
 
-    new vis.Network(document.getElementById("asn-graph"), { nodes, edges }, options);
-  });
+      new vis.Network(
+        document.getElementById("asn-graph"),
+        { nodes, edges },
+        options,
+      );
+    });
 </script>
 {% endblock %}
