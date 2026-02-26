@@ -1,6 +1,15 @@
 #!/bin/sh
 set -e
 
+# Wait for Postgres to become available
+if [ -n "$POSTGRES_HOST" ]; then
+  until pg_isready -h "$POSTGRES_HOST" -p "${POSTGRES_PORT:-5432}" >/dev/null 2>&1; do
+    echo "Waiting for Postgres..."
+    sleep 1
+  done
+fi
+
+
 # Create migrations (if any) and run migrations, then collect static files
 python manage.py makemigrations asn --noinput || true
 python manage.py migrate --noinput
