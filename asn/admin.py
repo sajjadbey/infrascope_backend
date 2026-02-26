@@ -1,7 +1,15 @@
 from django.contrib import admin
 from django.contrib.gis import admin as gis_admin
 from django import forms
-from .models import NetworkType, NetworkStatus, ASN, Prefix, NetworkNode, Location
+from .models import (
+    NetworkType,
+    NetworkStatus,
+    ASN,
+    Prefix,
+    NetworkNode,
+    Location,
+    NodeType,
+)
 
 
 class ASNAdminForm(forms.ModelForm):
@@ -135,11 +143,18 @@ class LocationAdmin(gis_admin.GISModelAdmin):
     default_zoom = 5
 
 
+@admin.register(NodeType)
+class NodeTypeAdmin(admin.ModelAdmin):
+    list_display = ["name", "slug", "color"]
+    search_fields = ["name"]
+    prepopulated_fields = {"slug": ("name",)}
+
+
 @admin.register(NetworkNode)
 class NetworkNodeAdmin(admin.ModelAdmin):
     list_display = ["name", "asn", "created_at"]
-    list_filter = ["asn", "locations", "created_at"]
+    list_filter = ["asn", "locations", "node_types", "created_at"]
     search_fields = ["name", "asn__asn_number", "asn__name", "locations__name"]
-    autocomplete_fields = ["asn", "locations"]
-    filter_horizontal = ["locations"]
+    autocomplete_fields = ["asn", "locations", "node_types"]
+    filter_horizontal = ["locations", "node_types"]
     readonly_fields = ["created_at", "updated_at"]

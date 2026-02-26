@@ -232,6 +232,34 @@ class Location(models.Model):
         return self.name
 
 
+class NodeType(models.Model):
+    """
+    Classification for network nodes (e.g., IXP, Data Center, CDN Node, Router).
+    """
+
+    name = models.CharField(max_length=100, unique=True, verbose_name="Node Type")
+    slug = models.SlugField(max_length=100, unique=True, db_index=True)
+    color = models.CharField(
+        max_length=7,
+        default="#0ea5e9",
+        verbose_name="Badge Color",
+        help_text="Hex color code (e.g., #0ea5e9)",
+    )
+
+    class Meta:
+        verbose_name = "Node Type"
+        verbose_name_plural = "Node Types"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
 class NetworkNode(models.Model):
     """
     Represents a physical or logical network node (e.g., PoP, Data Center, Router)
@@ -244,6 +272,9 @@ class NetworkNode(models.Model):
     )
     locations = models.ManyToManyField(
         Location, related_name="nodes", verbose_name="Locations", blank=True
+    )
+    node_types = models.ManyToManyField(
+        NodeType, related_name="nodes", verbose_name="Node Types", blank=True
     )
 
     # Timestamps

@@ -91,10 +91,22 @@ InfraScope{% endblock %} {% block extra_css %}
       animation: pulse 2s infinite;
       z-index: -1;
   }
-  @keyframes pulse {
-      0% { transform: scale(1); opacity: 0.4; }
-      100% { transform: scale(2.5); opacity: 0; }
-  }
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.4; }
+        100% { transform: scale(2.5); opacity: 0; }
+    }
+    .node-type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #fff;
+        margin-right: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        line-height: 1.4;
+    }
 </style>
 {% endblock %} {% block content_wrapper %}
 <div class="map-header">
@@ -148,17 +160,24 @@ InfraScope{% endblock %} {% block extra_css %}
           },
           onEachFeature: function (feature, layer) {
             if (feature.properties && feature.properties.nodes) {
-              let nodesListHtml = "";
-              feature.properties.nodes.forEach((node) => {
-                nodesListHtml += `
-                                    <div class="node-item" style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
-                                        <strong>${node.name}</strong><br>
+              let nodesListHtml = '';
+              feature.properties.nodes.forEach(node => {
+                  let badgesHtml = '';
+                  if (node.node_types) {
+                      node.node_types.forEach(nt => {
+                          badgesHtml += `<span class="node-type-badge" style="background-color: ${nt.color}">${nt.name}</span>`;
+                      });
+                  }
+
+                  nodesListHtml += `
+                                    <div class="node-item" style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+                                        <div style="margin-bottom: 4px;"><strong>${node.name}</strong></div>
+                                        <div style="margin-bottom: 8px;">${badgesHtml}</div>
                                         <small>ASN: AS${node.asn_number} (${node.asn_name})</small><br>
                                         <a href="/${node.asn_number}/" style="color: var(--color-brand); font-size: 0.8rem;">View ASN Details</a>
                                     </div>
                                 `;
               });
-
               const popupContent = `
                                 <div class="node-popup">
                                     <h3 style="margin-bottom: 10px;">${feature.properties.name}</h3>
