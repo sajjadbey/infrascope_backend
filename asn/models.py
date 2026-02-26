@@ -235,18 +235,15 @@ class Location(models.Model):
 class NetworkNode(models.Model):
     """
     Represents a physical or logical network node (e.g., PoP, Data Center, Router)
-    at a specific Location.
+    which may be present at multiple geographical Locations.
     """
 
     name = models.CharField(max_length=255, verbose_name="Node Name")
     asn = models.ForeignKey(
         ASN, on_delete=models.CASCADE, related_name="nodes", verbose_name="ASN"
     )
-    location = models.ForeignKey(
-        Location,
-        on_delete=models.CASCADE,
-        related_name="nodes",
-        verbose_name="Location",
+    locations = models.ManyToManyField(
+        Location, related_name="nodes", verbose_name="Locations", blank=True
     )
 
     # Timestamps

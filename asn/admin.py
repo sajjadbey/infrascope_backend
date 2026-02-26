@@ -137,8 +137,9 @@ class LocationAdmin(gis_admin.GISModelAdmin):
 
 @admin.register(NetworkNode)
 class NetworkNodeAdmin(admin.ModelAdmin):
-    list_display = ["name", "asn", "location", "created_at"]
-    list_filter = ["asn", "location", "created_at"]
-    search_fields = ["name", "asn__asn_number", "asn__name", "location__name"]
-    autocomplete_fields = ["asn", "location"]
+    list_display = ["name", "asn", "created_at"]
+    list_filter = ["asn", "locations", "created_at"]
+    search_fields = ["name", "asn__asn_number", "asn__name", "locations__name"]
+    autocomplete_fields = ["asn", "locations"]
+    filter_horizontal = ["locations"]
     readonly_fields = ["created_at", "updated_at"]
