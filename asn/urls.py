@@ -10,6 +10,8 @@ urlpatterns = [
     path("<int:asn_number>/graph/", views.asn_graph, name="asn_graph"),
     path("topology/", views.asn_full_topology, name="asn_full_topology"),
     path("topology/data/", views.asn_topology_data, name="asn_topology_data"),
+    path("map/", views.network_map, name="network_map"),
+    path("map/data/", views.network_nodes_geojson, name="network_nodes_geojson"),
     # SEO
     path("robots.txt", robots_txt, name="robots_txt"),
 ]

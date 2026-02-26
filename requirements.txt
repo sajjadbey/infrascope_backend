@@ -7,3 +7,5 @@ python-dotenv==1.2.1
 sqlparse==0.5.5
 django-cors-headers==4.9.0
 django-csp==4.0
+psycopg2-binary==2.9.10
+dj-database-url==2.3.0

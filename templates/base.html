@@ -53,6 +53,7 @@
         {% block nav_items %}
         <a href="{% url 'home' %}" class="{% block nav_home %}{% endblock %}">Home</a>
         <a href="{% url 'asn_full_topology' %}" class="{% block nav_topology %}{% endblock %}">Topology</a>
+        <a href="{% url 'network_map' %}" class="{% block nav_map %}{% endblock %}">Network Map</a>
         <a href="{% url 'lookup_ip' %}" class="{% block nav_lookup %}{% endblock %}">IP Lookup</a>
         {% endblock %}
       </nav>
