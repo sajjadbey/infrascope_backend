@@ -51,6 +51,50 @@ InfraScope{% endblock %} {% block extra_css %}
   .node-popup strong {
     color: var(--text-primary);
   }
+
+  /* ── Custom Datacenter Marker ── */
+  .datacenter-icon {
+      background: none;
+      border: none;
+  }
+  .datacenter-marker {
+      width: 40px;
+      height: 40px;
+      background: var(--color-brand);
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4);
+      border: 2px solid #fff;
+      transition: transform 0.2s, background 0.2s;
+  }
+  .datacenter-marker:hover {
+      background: var(--color-brand-hover);
+      transform: rotate(-45deg) scale(1.1);
+  }
+  .datacenter-marker i, .datacenter-marker span {
+      transform: rotate(45deg);
+      font-size: 1.2rem;
+      color: #fff;
+  }
+  /* Pulse effect */
+  .datacenter-marker::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: inherit;
+      opacity: 0.4;
+      animation: pulse 2s infinite;
+      z-index: -1;
+  }
+  @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.4; }
+      100% { transform: scale(2.5); opacity: 0; }
+  }
 </style>
 {% endblock %} {% block content_wrapper %}
 <div class="map-header">
@@ -79,13 +123,28 @@ InfraScope{% endblock %} {% block extra_css %}
       maxZoom: 19,
     }).addTo(map);
 
+    // Define custom datacenter icon
+    const datacenterIcon = L.divIcon({
+        className: 'datacenter-icon',
+        html: `
+            <div class="datacenter-marker">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+                    <path d="M7 15h10v2H7v-2zm0-4h10v2H7v-2zm0-4h10v2H7V7zm15-4v18a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1zm-2 1H4v16h16V4z"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+    });
+
     // Fetch GeoJSON data from our backend
     fetch('{% url "network_nodes_geojson" %}')
       .then((response) => response.json())
       .then((data) => {
         L.geoJSON(data, {
           pointToLayer: function (feature, latlng) {
-            return L.marker(latlng);
+            return L.marker(latlng, { icon: datacenterIcon });
           },
           onEachFeature: function (feature, layer) {
             if (feature.properties && feature.properties.nodes) {
