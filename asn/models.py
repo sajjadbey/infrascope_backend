@@ -207,19 +207,46 @@ class Prefix(models.Model):
         return f"{self.network}/{self.prefix_length}"
 
 
+class Location(models.Model):
+    """
+    Geographical location (e.g., a specific city, data center, or building).
+    One location can host multiple network nodes.
+    """
+
+    name = models.CharField(max_length=255, verbose_name="Location Name")
+    point = gis_models.PointField(
+        verbose_name="Coordinates",
+        help_text="Click on the map to set the exact coordinates",
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
+
+    class Meta:
+        verbose_name = "Location"
+        verbose_name_plural = "Locations"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class NetworkNode(models.Model):
     """
     Represents a physical or logical network node (e.g., PoP, Data Center, Router)
-    mapped to a specific geographical location.
+    at a specific Location.
     """
 
     name = models.CharField(max_length=255, verbose_name="Node Name")
     asn = models.ForeignKey(
         ASN, on_delete=models.CASCADE, related_name="nodes", verbose_name="ASN"
     )
-    location = gis_models.PointField(
-        verbose_name="Geographical Location",
-        help_text="Click on the map to set the node location",
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.CASCADE,
+        related_name="nodes",
+        verbose_name="Location",
     )
 
     # Timestamps

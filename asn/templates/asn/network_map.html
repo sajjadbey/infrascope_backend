@@ -1,108 +1,119 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block title %}Network Map — InfraScope{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% extends "base.html" %} {% load static %} {% block title %}Network Map —
+InfraScope{% endblock %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
 <style>
-    .map-container {
-        height: calc(100vh - 120px);
-        min-height: 500px;
-        width: 100%;
-        position: relative;
-    }
-    #map {
-        height: 100%;
-        width: 100%;
-        z-index: 1;
-    }
-    .map-header {
-        padding: 1.5rem;
-        background: var(--bg-surface);
-        border-bottom: 1px solid var(--border-color);
-    }
-    .map-header h1 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-    .map-header p {
-        margin: 0.25rem 0 0;
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-    }
-    .leaflet-popup-content-wrapper {
-        border-radius: 8px;
-        padding: 5px;
-    }
-    .node-popup h3 {
-        margin: 0 0 5px;
-        font-size: 1.1rem;
-        color: var(--color-brand);
-    }
-    .node-popup p {
-        margin: 0;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-    }
-    .node-popup strong {
-        color: var(--text-primary);
-    }
+  .map-container {
+    height: calc(100vh - 120px);
+    min-height: 500px;
+    width: 100%;
+    position: relative;
+  }
+  #map {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+  }
+  .map-header {
+    padding: 1.5rem;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+  }
+  .map-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .map-header p {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    padding: 5px;
+  }
+  .node-popup h3 {
+    margin: 0 0 5px;
+    font-size: 1.1rem;
+    color: var(--color-brand);
+  }
+  .node-popup p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  .node-popup strong {
+    color: var(--text-primary);
+  }
 </style>
-{% endblock %}
-
-{% block content_wrapper %}
+{% endblock %} {% block content_wrapper %}
 <div class="map-header">
-    <h1>Network Topology Map</h1>
-    <p>Geographical distribution of network nodes in Iran</p>
+  <h1>Network Topology Map</h1>
+  <p>Geographical distribution of network nodes in Iran</p>
 </div>
 <div class="map-container">
-    <div id="map"></div>
+  <div id="map"></div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock %} {% block extra_js %}
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the map centered on Iran
-        // Approx center: [32.4278, 53.6880]
-        const map = L.map('map').setView([32.4278, 53.6880], 6);
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialize the map centered on Iran
+    // Approx center: [32.4278, 53.6880]
+    const map = L.map("map").setView([32.4278, 53.688], 6);
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19,
-        }).addTo(map);
+    // Add OpenStreetMap tiles
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map);
 
-        // Fetch GeoJSON data from our backend
-        fetch('{% url "network_nodes_geojson" %}')
-            .then(response => response.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    pointToLayer: function(feature, latlng) {
-                        return L.marker(latlng);
-                    },
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties) {
-                            const popupContent = `
+    // Fetch GeoJSON data from our backend
+    fetch('{% url "network_nodes_geojson" %}')
+      .then((response) => response.json())
+      .then((data) => {
+        L.geoJSON(data, {
+          pointToLayer: function (feature, latlng) {
+            return L.marker(latlng);
+          },
+          onEachFeature: function (feature, layer) {
+            if (feature.properties && feature.properties.nodes) {
+              let nodesListHtml = "";
+              feature.properties.nodes.forEach((node) => {
+                nodesListHtml += `
+                                    <div class="node-item" style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+                                        <strong>${node.name}</strong><br>
+                                        <small>ASN: AS${node.asn_number} (${node.asn_name})</small><br>
+                                        <a href="/${node.asn_number}/" style="color: var(--color-brand); font-size: 0.8rem;">View ASN Details</a>
+                                    </div>
+                                `;
+              });
+
+              const popupContent = `
                                 <div class="node-popup">
-                                    <h3>${feature.properties.name}</h3>
-                                    <p><strong>ASN:</strong> AS${feature.properties.asn_number}</p>
-                                    <p><strong>Owner:</strong> ${feature.properties.asn_name}</p>
-                                    <p><a href="/${feature.properties.asn_number}/" style="color: var(--color-brand); text-decoration: underline; margin-top: 5px; display: inline-block;">View ASN Details</a></p>
+                                    <h3 style="margin-bottom: 10px;">${feature.properties.name}</h3>
+                                    ${nodesListHtml}
                                 </div>
                             `;
-                            layer.bindPopup(popupContent);
-                        }
-                    }
-                }).addTo(map);
-            })
-            .catch(error => {
-                console.error('Error loading GeoJSON:', error);
-            });
-    });
+              layer.bindPopup(popupContent);
+            }
+          },
+        }).addTo(map);
+      })
+      .catch((error) => {
+        console.error("Error loading GeoJSON:", error);
+      });
+  });
 </script>
 {% endblock %}

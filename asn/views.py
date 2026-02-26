@@ -3,7 +3,7 @@ from django.views.decorators.http import require_GET
 from django.db.models import Prefetch, Q
 from ipaddress import ip_address, ip_network
 import socket
-from .models import ASN, Prefix, NetworkNode
+from .models import ASN, Prefix, NetworkNode, Location
 from .seo import asn_jsonld
 from django.shortcuts import render, get_object_or_404
 
@@ -302,26 +302,36 @@ def network_map(request):
 
 @require_GET
 def network_nodes_geojson(request):
-    """Serialize NetworkNode instances into a GeoJSON FeatureCollection."""
-    nodes = NetworkNode.objects.select_related("asn").all()
+    """Serialize Locations and their NetworkNodes into a GeoJSON FeatureCollection."""
+    locations = Location.objects.prefetch_related("nodes__asn").all()
 
     features = []
-    for node in nodes:
+    for loc in locations:
+        nodes_data = []
+        for node in loc.nodes.all():
+            nodes_data.append(
+                {
+                    "id": node.id,
+                    "name": node.name,
+                    "asn_number": node.asn.asn_number,
+                    "asn_name": node.asn.name,
+                }
+            )
+
+        if not nodes_data:
+            continue
+
         features.append(
             {
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
-                    "coordinates": [
-                        node.location.x,
-                        node.location.y,
-                    ],  # [longitude, latitude]
+                    "coordinates": [loc.point.x, loc.point.y],
                 },
                 "properties": {
-                    "id": node.id,
-                    "name": node.name,
-                    "asn_number": node.asn.asn_number,
-                    "asn_name": node.asn.name,
+                    "id": loc.id,
+                    "name": loc.name,
+                    "nodes": nodes_data,
                 },
             }
         )

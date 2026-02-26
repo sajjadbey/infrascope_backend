@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.gis import admin as gis_admin
 from django import forms
-from .models import NetworkType, NetworkStatus, ASN, Prefix, NetworkNode
+from .models import NetworkType, NetworkStatus, ASN, Prefix, NetworkNode, Location
 
 
 class ASNAdminForm(forms.ModelForm):
@@ -124,13 +124,21 @@ class PrefixAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "updated_at"]
 
 
-@admin.register(NetworkNode)
-class NetworkNodeAdmin(gis_admin.GISModelAdmin):
-    list_display = ["name", "asn", "location", "created_at"]
-    list_filter = ["asn", "created_at"]
-    search_fields = ["name", "asn__asn_number", "asn__name"]
+@admin.register(Location)
+class LocationAdmin(gis_admin.GISModelAdmin):
+    list_display = ["name", "point", "created_at"]
+    search_fields = ["name"]
 
     # Iran coordinates
     default_lat = 32.4278
     default_lon = 53.6880
     default_zoom = 5
+
+
+@admin.register(NetworkNode)
+class NetworkNodeAdmin(admin.ModelAdmin):
+    list_display = ["name", "asn", "location", "created_at"]
+    list_filter = ["asn", "location", "created_at"]
+    search_fields = ["name", "asn__asn_number", "asn__name", "location__name"]
+    autocomplete_fields = ["asn", "location"]
+    readonly_fields = ["created_at", "updated_at"]
