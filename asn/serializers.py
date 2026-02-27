@@ -25,7 +25,7 @@ class NetworkStatusSerializer(serializers.ModelSerializer):
 class NodeTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = NodeType
-        fields = ["id", "name", "slug", "color"]
+        fields = ["id", "name", "name_fa", "slug", "color"]
 
 
 class PrefixSerializer(serializers.ModelSerializer):
@@ -44,8 +44,10 @@ class ASNSerializer(serializers.ModelSerializer):
             "id",
             "asn_number",
             "name",
+            "name_fa",
             "slug",
             "description",
+            "description_fa",
             "network_type",
             "network_status",
             "registered_on",
@@ -60,7 +62,7 @@ class ASNRecursiveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ASN
-        fields = ["id", "asn_number", "name", "slug"]
+        fields = ["id", "asn_number", "name", "name_fa", "slug"]
 
 
 class ASNDetailSerializer(ASNSerializer):
@@ -78,7 +80,7 @@ class LocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        fields = ["id", "name", "latitude", "longitude"]
+        fields = ["id", "name", "name_fa", "latitude", "longitude"]
 
 
 class NetworkNodeSerializer(serializers.ModelSerializer):
@@ -87,4 +89,4 @@ class NetworkNodeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NetworkNode
-        fields = ["id", "name", "asn", "node_types"]
+        fields = ["id", "name", "name_fa", "asn", "node_types"]

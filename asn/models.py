@@ -10,6 +10,9 @@ class NetworkType(models.Model):
     """
 
     name = models.CharField(max_length=100, unique=True, verbose_name="Network Type")
+    name_fa = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name="Network Type (Persian)"
+    )
     slug = models.SlugField(max_length=100, unique=True, db_index=True)
 
     class Meta:
@@ -33,6 +36,9 @@ class NetworkStatus(models.Model):
     """
 
     name = models.CharField(max_length=100, unique=True, verbose_name="Status")
+    name_fa = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name="Status (Persian)"
+    )
     slug = models.SlugField(max_length=100, unique=True, db_index=True)
 
     class Meta:
@@ -62,8 +68,17 @@ class ASN(models.Model):
         help_text="Autonomous System Number (e.g., 64512)",
     )
     name = models.CharField(max_length=255, verbose_name="Organization Name")
+    name_fa = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Organization Name (Persian)",
+    )
     slug = models.SlugField(max_length=255, unique=True, db_index=True)
     description = models.TextField(blank=True, null=True, verbose_name="Description")
+    description_fa = models.TextField(
+        blank=True, null=True, verbose_name="Description (Persian)"
+    )
 
     # Normalized foreign keys
     network_type = models.ForeignKey(
@@ -214,6 +229,9 @@ class Location(models.Model):
     """
 
     name = models.CharField(max_length=255, verbose_name="Location Name")
+    name_fa = models.CharField(
+        max_length=255, blank=True, null=True, verbose_name="Location Name (Persian)"
+    )
     point = gis_models.PointField(
         verbose_name="Coordinates",
         help_text="Click on the map to set the exact coordinates",
@@ -238,6 +256,9 @@ class NodeType(models.Model):
     """
 
     name = models.CharField(max_length=100, unique=True, verbose_name="Node Type")
+    name_fa = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name="Node Type (Persian)"
+    )
     slug = models.SlugField(max_length=100, unique=True, db_index=True)
     color = models.CharField(
         max_length=7,
@@ -267,6 +288,9 @@ class NetworkNode(models.Model):
     """
 
     name = models.CharField(max_length=255, verbose_name="Node Name")
+    name_fa = models.CharField(
+        max_length=255, blank=True, null=True, verbose_name="Node Name (Persian)"
+    )
     asn = models.ForeignKey(
         ASN, on_delete=models.CASCADE, related_name="nodes", verbose_name="ASN"
     )
