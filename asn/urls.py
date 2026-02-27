@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/lookup/", api_views.api_lookup_ip, name="api_lookup"),
     path("api/topology/", api_views.api_topology_data, name="api_topology"),
     path("api/map/", api_views.api_network_nodes, name="api_map"),
+    path("api/<int:asn_number>/summary/", views.asn_summary, name="asn_summary"),
     # SEO
     path("robots.txt", robots_txt, name="robots_txt"),
 ]
