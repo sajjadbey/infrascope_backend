@@ -23,7 +23,7 @@ import os
 import django
 from django.core.exceptions import ImproperlyConfigured
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', os.environ.get('DJANGO_SETTINGS_MODULE', 'iranicdna_backend.settings'))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', os.environ.get('DJANGO_SETTINGS_MODULE', 'infrascope_backend.settings'))
 django.setup()
 from django.contrib.auth import get_user_model
 User = get_user_model()

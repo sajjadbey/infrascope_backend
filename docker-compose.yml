@@ -45,6 +45,7 @@ services:
       - static_volume:/app/static
       - ./media:/app/media
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ../infrascope-frontend/dist:/var/www/infrascope-frontend
     depends_on:
       - web
 
