@@ -45,11 +45,6 @@
   <!-- ── Site Header ── -->
   <header class="site-header">
     <div class="site-header__inner">
-      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
       <a href="{% url 'home' %}" class="site-header__brand">
         <span class="site-header__logo">🌐</span>
         <span class="site-header__title">Infra<span>Scope</span></span>
@@ -62,23 +57,33 @@
         <a href="{% url 'lookup_ip' %}" class="{% block nav_lookup %}{% endblock %}">IP Lookup</a>
         {% endblock %}
       </nav>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </header>
 
-  <!-- ── Mobile Sidebar ── -->
-  <div class="mobile-sidebar" id="mobile-sidebar">
-    <div class="mobile-sidebar__header">
-      <span class="mobile-sidebar__title">Menu</span>
-      <button class="mobile-sidebar__close" id="mobile-sidebar-close">&times;</button>
+  <!-- ── Mobile Menu Overlay ── -->
+  <div class="mobile-menu" id="mobile-sidebar">
+    <div class="mobile-menu__header">
+      <div class="mobile-menu__brand">
+        <span class="mobile-menu__logo">🌐</span>
+        <div class="mobile-menu__title-group">
+          <span class="mobile-menu__title">Infra<span>Scope</span></span>
+          <span class="mobile-menu__subtitle">Network Analysis Portal</span>
+        </div>
+      </div>
+      <button class="mobile-menu__close" id="mobile-sidebar-close" aria-label="Close menu">&times;</button>
     </div>
-    <nav class="mobile-sidebar__nav">
-      <a href="{% url 'home' %}" class="{% block mobile_nav_home %}{% endblock %}">🏠 Home</a>
-      <a href="{% url 'asn_full_topology' %}" class="{% block mobile_nav_topology %}{% endblock %}">🗺️ Topology</a>
-      <a href="{% url 'network_map' %}" class="{% block mobile_nav_map %}{% endblock %}">🌐 Network Map</a>
-      <a href="{% url 'lookup_ip' %}" class="{% block mobile_nav_lookup %}{% endblock %}">🔍 IP Lookup</a>
+    <nav class="mobile-menu__nav">
+      <a href="{% url 'home' %}"><span>🏠</span> Home</a>
+      <a href="{% url 'asn_full_topology' %}"><span>🗺️</span> Topology</a>
+      <a href="{% url 'network_map' %}"><span>🌐</span> Network Map</a>
+      <a href="{% url 'lookup_ip' %}"><span>🔍</span> IP Lookup</a>
     </nav>
   </div>
-  <div class="mobile-overlay" id="mobile-overlay"></div>
 
   <!-- ── Page Content ── -->
   {% block content_wrapper %}
