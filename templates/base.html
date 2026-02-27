@@ -63,27 +63,20 @@
         <span></span>
       </button>
     </div>
-  </header>
-
-  <!-- ── Mobile Menu Overlay ── -->
-  <div class="mobile-menu" id="mobile-sidebar">
-    <div class="mobile-menu__header">
-      <div class="mobile-menu__brand">
-        <span class="mobile-menu__logo">🌐</span>
-        <div class="mobile-menu__title-group">
-          <span class="mobile-menu__title">Infra<span>Scope</span></span>
-          <span class="mobile-menu__subtitle">Network Analysis Portal</span>
-        </div>
+    <!-- Mobile Navigation Panel -->
+    <nav class="mobile-nav" id="mobile-nav">
+      <div class="mobile-nav__header">
+        <span>Menu</span>
+        <button id="mobile-nav-close">&times;</button>
       </div>
-      <button class="mobile-menu__close" id="mobile-sidebar-close" aria-label="Close menu">&times;</button>
-    </div>
-    <nav class="mobile-menu__nav">
-      <a href="{% url 'home' %}"><span>🏠</span> Home</a>
-      <a href="{% url 'asn_full_topology' %}"><span>🗺️</span> Topology</a>
-      <a href="{% url 'network_map' %}"><span>🌐</span> Network Map</a>
-      <a href="{% url 'lookup_ip' %}"><span>🔍</span> IP Lookup</a>
+      <div class="mobile-nav__items">
+        <a href="{% url 'home' %}">🏠 Home</a>
+        <a href="{% url 'asn_full_topology' %}">🗺️ Topology</a>
+        <a href="{% url 'network_map' %}">🌐 Network Map</a>
+        <a href="{% url 'lookup_ip' %}">🔍 IP Lookup</a>
+      </div>
     </nav>
-  </div>
+  </header>
 
   <!-- ── Page Content ── -->
   {% block content_wrapper %}
@@ -110,19 +103,22 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const toggle = document.getElementById('mobile-toggle');
-      const sidebar = document.getElementById('mobile-sidebar');
-      const overlay = document.getElementById('mobile-overlay');
-      const close = document.getElementById('mobile-sidebar-close');
+      const nav = document.getElementById('mobile-nav');
+      const close = document.getElementById('mobile-nav-close');
 
       function toggleMenu() {
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-        document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        nav.classList.toggle('active');
       }
 
       toggle.addEventListener('click', toggleMenu);
       close.addEventListener('click', toggleMenu);
-      overlay.addEventListener('click', toggleMenu);
+      
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!nav.contains(e.target) && !toggle.contains(e.target) && nav.classList.contains('active')) {
+          nav.classList.remove('active');
+        }
+      });
     });
   </script>
 
