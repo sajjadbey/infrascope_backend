@@ -291,8 +291,8 @@ class NetworkNode(models.Model):
     name_fa = models.CharField(
         max_length=255, blank=True, null=True, verbose_name="Node Name (Persian)"
     )
-    asn = models.ForeignKey(
-        ASN, on_delete=models.CASCADE, related_name="nodes", verbose_name="ASN"
+    asns = models.ManyToManyField(
+        ASN, related_name="nodes", verbose_name="ASNs", blank=True
     )
     locations = models.ManyToManyField(
         Location, related_name="nodes", verbose_name="Locations", blank=True
@@ -311,4 +311,7 @@ class NetworkNode(models.Model):
         ordering = ["name"]
 
     def __str__(self):
-        return f"{self.name} (AS{self.asn.asn_number})"
+        asn_list = ", ".join([str(asn.asn_number) for asn in self.asns.all()[:3]])
+        if self.asns.count() > 3:
+            asn_list += "..."
+        return f"{self.name} (AS {asn_list})"

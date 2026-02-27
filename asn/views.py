@@ -304,7 +304,7 @@ def network_map(request):
 def network_nodes_geojson(request):
     """Serialize Locations and their NetworkNodes into a GeoJSON FeatureCollection."""
     locations = Location.objects.prefetch_related(
-        "nodes__asn", "nodes__node_types"
+        "nodes__asns", "nodes__node_types"
     ).all()
 
     features = []
@@ -315,10 +315,17 @@ def network_nodes_geojson(request):
                 {
                     "id": node.id,
                     "name": node.name,
-                    "asn_number": node.asn.asn_number,
-                    "asn_name": node.asn.name,
+                    "name_fa": node.name_fa,
+                    "asns": [
+                        {
+                            "number": asn.asn_number,
+                            "name": asn.name,
+                            "name_fa": asn.name_fa,
+                        }
+                        for asn in node.asns.all()
+                    ],
                     "node_types": [
-                        {"name": nt.name, "color": nt.color}
+                        {"name": nt.name, "name_fa": nt.name_fa, "color": nt.color}
                         for nt in node.node_types.all()
                     ],
                 }

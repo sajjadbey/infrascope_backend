@@ -84,9 +84,9 @@ class LocationSerializer(serializers.ModelSerializer):
 
 
 class NetworkNodeSerializer(serializers.ModelSerializer):
-    asn = ASNRecursiveSerializer(read_only=True)
+    asns = ASNRecursiveSerializer(many=True, read_only=True)
     node_types = NodeTypeSerializer(many=True, read_only=True)
 
     class Meta:
         model = NetworkNode
-        fields = ["id", "name", "name_fa", "asn", "node_types"]
+        fields = ["id", "name", "name_fa", "asns", "node_types"]

@@ -170,15 +170,20 @@ class NodeTypeAdmin(admin.ModelAdmin):
 
 @admin.register(NetworkNode)
 class NetworkNodeAdmin(admin.ModelAdmin):
-    list_display = ["name", "name_fa", "asn", "created_at"]
-    list_filter = ["asn", "locations", "node_types", "created_at"]
+    list_display = ["name", "name_fa", "get_asns", "created_at"]
+    list_filter = ["asns", "locations", "node_types", "created_at"]
     search_fields = [
         "name",
         "name_fa",
-        "asn__asn_number",
-        "asn__name",
+        "asns__asn_number",
+        "asns__name",
         "locations__name",
     ]
-    autocomplete_fields = ["asn", "locations", "node_types"]
-    filter_horizontal = ["locations", "node_types"]
+    autocomplete_fields = ["asns", "locations", "node_types"]
+    filter_horizontal = ["asns", "locations", "node_types"]
     readonly_fields = ["created_at", "updated_at"]
+
+    def get_asns(self, obj):
+        return ", ".join([str(asn.asn_number) for asn in obj.asns.all()])
+
+    get_asns.short_description = "ASNs"
