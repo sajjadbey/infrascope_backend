@@ -64,15 +64,15 @@ class ASNAdminForm(forms.ModelForm):
 
 @admin.register(NetworkType)
 class NetworkTypeAdmin(admin.ModelAdmin):
-    list_display = ["name", "slug"]
-    search_fields = ["name"]
+    list_display = ["name", "name_fa", "slug"]
+    search_fields = ["name", "name_fa"]
     prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(NetworkStatus)
 class NetworkStatusAdmin(admin.ModelAdmin):
-    list_display = ["name", "slug"]
-    search_fields = ["name"]
+    list_display = ["name", "name_fa", "slug"]
+    search_fields = ["name", "name_fa"]
     prepopulated_fields = {"slug": ("name",)}
 
 
@@ -90,19 +90,37 @@ class ASNAdmin(admin.ModelAdmin):
     list_display = [
         "asn_number",
         "name",
+        "name_fa",
         "network_type",
         "network_status",
         "registrar",
         "created_at",
     ]
     list_filter = ["network_type", "network_status", "registrar", "created_at"]
-    search_fields = ["asn_number", "name", "description", "registered_to"]
+    search_fields = [
+        "asn_number",
+        "name",
+        "name_fa",
+        "description",
+        "description_fa",
+        "registered_to",
+    ]
     prepopulated_fields = {"slug": ("name",)}
 
     fieldsets = (
         (
             "Basic Information",
-            {"fields": ("asn_number", "name", "slug", "description", "tags")},
+            {
+                "fields": (
+                    "asn_number",
+                    "name",
+                    "name_fa",
+                    "slug",
+                    "description",
+                    "description_fa",
+                    "tags",
+                )
+            },
         ),
         ("Classification", {"fields": ("network_type", "network_status")}),
         ("Registration", {"fields": ("registered_on", "registered_to", "registrar")}),
@@ -134,8 +152,8 @@ class PrefixAdmin(admin.ModelAdmin):
 
 @admin.register(Location)
 class LocationAdmin(gis_admin.GISModelAdmin):
-    list_display = ["name", "point", "created_at"]
-    search_fields = ["name"]
+    list_display = ["name", "name_fa", "point", "created_at"]
+    search_fields = ["name", "name_fa"]
 
     # Iran coordinates
     default_lat = 32.4278
@@ -145,16 +163,22 @@ class LocationAdmin(gis_admin.GISModelAdmin):
 
 @admin.register(NodeType)
 class NodeTypeAdmin(admin.ModelAdmin):
-    list_display = ["name", "slug", "color"]
-    search_fields = ["name"]
+    list_display = ["name", "name_fa", "slug", "color"]
+    search_fields = ["name", "name_fa"]
     prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(NetworkNode)
 class NetworkNodeAdmin(admin.ModelAdmin):
-    list_display = ["name", "asn", "created_at"]
+    list_display = ["name", "name_fa", "asn", "created_at"]
     list_filter = ["asn", "locations", "node_types", "created_at"]
-    search_fields = ["name", "asn__asn_number", "asn__name", "locations__name"]
+    search_fields = [
+        "name",
+        "name_fa",
+        "asn__asn_number",
+        "asn__name",
+        "locations__name",
+    ]
     autocomplete_fields = ["asn", "locations", "node_types"]
     filter_horizontal = ["locations", "node_types"]
     readonly_fields = ["created_at", "updated_at"]
