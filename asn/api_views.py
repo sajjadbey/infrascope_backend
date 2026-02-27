@@ -23,6 +23,9 @@ class DashboardStatsView(views.APIView):
                 "total_prefixes_v6": Prefix.objects.filter(ip_version=6).count(),
                 "total_locations": Location.objects.count(),
                 "total_nodes": NetworkNode.objects.count(),
+                "data_center_count": NetworkNode.objects.filter(node_types__name="Data Center").distinct().count(),
+                "home_isp_count": NetworkNode.objects.filter(node_types__name="Home ISP").distinct().count(),
+                "cdn_count": NetworkNode.objects.filter(node_types__name="CDN").distinct().count(),
             }
         )
 
