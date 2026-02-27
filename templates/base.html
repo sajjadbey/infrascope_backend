@@ -45,6 +45,11 @@
   <!-- ── Site Header ── -->
   <header class="site-header">
     <div class="site-header__inner">
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
       <a href="{% url 'home' %}" class="site-header__brand">
         <span class="site-header__logo">🌐</span>
         <span class="site-header__title">Infra<span>Scope</span></span>
@@ -59,6 +64,21 @@
       </nav>
     </div>
   </header>
+
+  <!-- ── Mobile Sidebar ── -->
+  <div class="mobile-sidebar" id="mobile-sidebar">
+    <div class="mobile-sidebar__header">
+      <span class="mobile-sidebar__title">Menu</span>
+      <button class="mobile-sidebar__close" id="mobile-sidebar-close">&times;</button>
+    </div>
+    <nav class="mobile-sidebar__nav">
+      <a href="{% url 'home' %}" class="{% block mobile_nav_home %}{% endblock %}">🏠 Home</a>
+      <a href="{% url 'asn_full_topology' %}" class="{% block mobile_nav_topology %}{% endblock %}">🗺️ Topology</a>
+      <a href="{% url 'network_map' %}" class="{% block mobile_nav_map %}{% endblock %}">🌐 Network Map</a>
+      <a href="{% url 'lookup_ip' %}" class="{% block mobile_nav_lookup %}{% endblock %}">🔍 IP Lookup</a>
+    </nav>
+  </div>
+  <div class="mobile-overlay" id="mobile-overlay"></div>
 
   <!-- ── Page Content ── -->
   {% block content_wrapper %}
@@ -80,6 +100,26 @@
     </div>
   </footer>
   {% endblock %}
+
+  <!-- ── Mobile Menu Script ── -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const toggle = document.getElementById('mobile-toggle');
+      const sidebar = document.getElementById('mobile-sidebar');
+      const overlay = document.getElementById('mobile-overlay');
+      const close = document.getElementById('mobile-sidebar-close');
+
+      function toggleMenu() {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+        document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+      }
+
+      toggle.addEventListener('click', toggleMenu);
+      close.addEventListener('click', toggleMenu);
+      overlay.addEventListener('click', toggleMenu);
+    });
+  </script>
 
   {% block extra_js %}{% endblock %}
 </body>
