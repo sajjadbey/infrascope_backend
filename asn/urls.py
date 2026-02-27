@@ -1,17 +1,18 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views, api_views
 from .seo import robots_txt
 
+router = DefaultRouter()
+router.register(r"asns", api_views.ASNViewSet, basename="asn")
+
 urlpatterns = [
-    path("", views.home, name="home"),
-    path("lookup/", views.lookup_ip, name="lookup_ip"),
-    path("<int:asn_number>/", views.asn_detail, name="asn_detail"),
-    path("<int:asn_number>/summary/", views.asn_summary, name="asn_summary"),
-    path("<int:asn_number>/graph/", views.asn_graph, name="asn_graph"),
-    path("topology/", views.asn_full_topology, name="asn_full_topology"),
-    path("topology/data/", views.asn_topology_data, name="asn_topology_data"),
-    path("map/", views.network_map, name="network_map"),
-    path("map/data/", views.network_nodes_geojson, name="network_nodes_geojson"),
+    # API Endpoints
+    path("api/", include(router.urls)),
+    path("api/stats/", api_views.DashboardStatsView.as_view(), name="api_stats"),
+    path("api/lookup/", api_views.api_lookup_ip, name="api_lookup"),
+    path("api/topology/", api_views.api_topology_data, name="api_topology"),
+    path("api/map/", api_views.api_network_nodes, name="api_map"),
     # SEO
     path("robots.txt", robots_txt, name="robots_txt"),
 ]

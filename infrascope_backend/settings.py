@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.sitemaps",
     "django.contrib.gis",
     "corsheaders",
+    "rest_framework",
     "asn",
 ]
 
@@ -146,6 +147,8 @@ if DEBUG:
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:8000",
         "http://127.0.0.1:8000",
+        "http://localhost:5173",  # Vite default
+        "http://localhost:3000",
     ]
 else:
     CORS_ALLOWED_ORIGINS = os.getenv("TRUSTED_ORIGINS", "").split(",")
@@ -167,9 +170,21 @@ if DEBUG:
     CSRF_TRUSTED_ORIGINS = [
         "http://localhost:8000",
         "http://127.0.0.1:8000",
+        "http://localhost:5173",
+        "http://localhost:3000",
     ]
 else:
     CSRF_TRUSTED_ORIGINS = os.getenv("TRUSTED_ORIGINS", "").split(",")
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+}
 
 # Security Settings (Production)
 if not DEBUG:
